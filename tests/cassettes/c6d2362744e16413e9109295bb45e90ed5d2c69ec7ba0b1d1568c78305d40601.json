@@ -1,4 +1,97 @@
 {
+  "assertions": [],
+  "drift": {
+    "baseline_events": [
+      {
+        "index": 0,
+        "payload": {
+          "content": "Use the local policy tool before answering.",
+          "name": null,
+          "refusal": false,
+          "source_role": "system"
+        },
+        "role": "user"
+      },
+      {
+        "index": 1,
+        "payload": {
+          "content": "Which review policy applies?",
+          "name": null,
+          "refusal": false,
+          "source_role": "user"
+        },
+        "role": "user"
+      },
+      {
+        "index": 2,
+        "payload": {
+          "arguments": {
+            "policy_id": "ledger-review"
+          },
+          "call_id": "toolu_local_1",
+          "name": "fetch_policy"
+        },
+        "role": "tool_call"
+      },
+      {
+        "index": 4,
+        "payload": {
+          "content": "Manual review applies because three anomalies were found.",
+          "name": null,
+          "refusal": false,
+          "source_role": null
+        },
+        "role": "assistant"
+      }
+    ],
+    "classification": "reworded",
+    "dimension": null,
+    "provenance": "Deterministic local drift classification. Not a live provider capture.",
+    "target_events": [
+      {
+        "index": 0,
+        "payload": {
+          "content": "Use the local policy tool before answering.",
+          "name": null,
+          "refusal": false,
+          "source_role": "system"
+        },
+        "role": "user"
+      },
+      {
+        "index": 1,
+        "payload": {
+          "content": "Which review policy applies?",
+          "name": null,
+          "refusal": false,
+          "source_role": "user"
+        },
+        "role": "user"
+      },
+      {
+        "index": 2,
+        "payload": {
+          "arguments": {
+            "policy_id": "ledger-review"
+          },
+          "call_id": "toolu_local_1",
+          "name": "fetch_policy"
+        },
+        "role": "tool_call"
+      },
+      {
+        "index": 4,
+        "payload": {
+          "content": "Three anomalies require manual review.",
+          "name": null,
+          "refusal": false,
+          "source_role": null
+        },
+        "role": "assistant"
+      }
+    ],
+    "tokens_spent": 121
+  },
   "events": [
     {
       "index": 0,
@@ -60,6 +153,7 @@
   "provider": "anthropic",
   "recorded_at": "2026-08-17T12:00:00Z",
   "redactions": [],
+  "replay": null,
   "request": {
     "max_tokens": 256,
     "messages": [

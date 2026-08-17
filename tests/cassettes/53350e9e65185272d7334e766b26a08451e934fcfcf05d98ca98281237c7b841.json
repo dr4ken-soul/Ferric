@@ -1,4 +1,37 @@
 {
+  "assertions": [],
+  "drift": {
+    "baseline_events": [
+      {
+        "index": 0,
+        "payload": {
+          "arguments": {
+            "month": "2026-03"
+          },
+          "call_id": "local-mcp-1",
+          "name": "read_ledger"
+        },
+        "role": "tool_call"
+      }
+    ],
+    "classification": "unchanged",
+    "dimension": null,
+    "provenance": "Deterministic local drift classification. Not a live provider capture.",
+    "target_events": [
+      {
+        "index": 0,
+        "payload": {
+          "arguments": {
+            "month": "2026-03"
+          },
+          "call_id": "local-mcp-1",
+          "name": "read_ledger"
+        },
+        "role": "tool_call"
+      }
+    ],
+    "tokens_spent": 0
+  },
   "events": [
     {
       "index": 0,
@@ -38,6 +71,7 @@
   "provider": "mcp",
   "recorded_at": "2026-08-17T12:00:00Z",
   "redactions": [],
+  "replay": null,
   "request": {
     "id": "local-mcp-1",
     "jsonrpc": "2.0",

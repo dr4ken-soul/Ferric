@@ -1,4 +1,255 @@
 {
+  "assertions": [
+    {
+      "expected": [
+        "read_ledger",
+        "flag_anomalies",
+        "prepare_review"
+      ],
+      "family": "sequence",
+      "location": null,
+      "message": "tool sequence matched the recorded baseline",
+      "observed": [
+        "read_ledger",
+        "flag_anomalies",
+        "prepare_review"
+      ],
+      "pattern": null,
+      "status": "pass"
+    },
+    {
+      "expected": [
+        "read_ledger",
+        "flag_anomalies",
+        "prepare_review"
+      ],
+      "family": "sequence",
+      "location": null,
+      "message": "tool order diverged at index 0",
+      "observed": [
+        "flag_anomalies",
+        "read_ledger",
+        "prepare_review"
+      ],
+      "pattern": null,
+      "status": "fail"
+    },
+    {
+      "expected": null,
+      "family": "arguments",
+      "location": null,
+      "message": "critical month and threshold fields matched",
+      "observed": null,
+      "pattern": null,
+      "status": "pass"
+    },
+    {
+      "expected": null,
+      "family": "schema",
+      "location": null,
+      "message": "structured anomaly result matched the local schema",
+      "observed": null,
+      "pattern": null,
+      "status": "pass"
+    },
+    {
+      "expected": null,
+      "family": "leakage",
+      "location": null,
+      "message": "0 declared secret matches across outbound fields",
+      "observed": null,
+      "pattern": null,
+      "status": "pass"
+    }
+  ],
+  "drift": {
+    "baseline_events": [
+      {
+        "index": 0,
+        "payload": {
+          "content": "Reconcile a local ledger and prepare review evidence.",
+          "name": null,
+          "refusal": false,
+          "source_role": "system"
+        },
+        "role": "user"
+      },
+      {
+        "index": 1,
+        "payload": {
+          "content": "Reconcile the March ledger.",
+          "name": null,
+          "refusal": false,
+          "source_role": "user"
+        },
+        "role": "user"
+      },
+      {
+        "index": 2,
+        "payload": {
+          "arguments": {
+            "month": "2026-03"
+          },
+          "call_id": "call_read",
+          "name": "read_ledger"
+        },
+        "role": "tool_call"
+      },
+      {
+        "index": 4,
+        "payload": {
+          "content": "The ledger is loaded. I will check the configured threshold.",
+          "name": null,
+          "refusal": false,
+          "source_role": "assistant"
+        },
+        "role": "assistant"
+      },
+      {
+        "index": 5,
+        "payload": {
+          "arguments": {
+            "threshold": 0.04
+          },
+          "call_id": "call_flag",
+          "name": "flag_anomalies"
+        },
+        "role": "tool_call"
+      },
+      {
+        "index": 7,
+        "payload": {
+          "arguments": {
+            "count": 3,
+            "month": "2026-03"
+          },
+          "call_id": "call_review",
+          "name": "prepare_review"
+        },
+        "role": "tool_call"
+      },
+      {
+        "index": 9,
+        "payload": {
+          "content": "Return the structured result.",
+          "name": null,
+          "refusal": false,
+          "source_role": "user"
+        },
+        "role": "user"
+      },
+      {
+        "index": 10,
+        "payload": {
+          "content": {
+            "anomalies": 3,
+            "month": "2026-03",
+            "review_id": "local-review-17",
+            "rows": 1842
+          },
+          "name": null,
+          "refusal": false,
+          "source_role": null
+        },
+        "role": "assistant"
+      }
+    ],
+    "classification": "diverged",
+    "dimension": "tool_order",
+    "provenance": "Deterministic local drift classification. Not a live provider capture.",
+    "target_events": [
+      {
+        "index": 0,
+        "payload": {
+          "content": "Reconcile a local ledger and prepare review evidence.",
+          "name": null,
+          "refusal": false,
+          "source_role": "system"
+        },
+        "role": "user"
+      },
+      {
+        "index": 1,
+        "payload": {
+          "content": "Reconcile the March ledger.",
+          "name": null,
+          "refusal": false,
+          "source_role": "user"
+        },
+        "role": "user"
+      },
+      {
+        "index": 2,
+        "payload": {
+          "arguments": {
+            "threshold": 0.04
+          },
+          "call_id": "call_flag",
+          "name": "flag_anomalies"
+        },
+        "role": "tool_call"
+      },
+      {
+        "index": 4,
+        "payload": {
+          "content": "The ledger is loaded. I will check the configured threshold.",
+          "name": null,
+          "refusal": false,
+          "source_role": "assistant"
+        },
+        "role": "assistant"
+      },
+      {
+        "index": 5,
+        "payload": {
+          "arguments": {
+            "month": "2026-03"
+          },
+          "call_id": "call_read",
+          "name": "read_ledger"
+        },
+        "role": "tool_call"
+      },
+      {
+        "index": 7,
+        "payload": {
+          "arguments": {
+            "count": 3,
+            "month": "2026-03"
+          },
+          "call_id": "call_review",
+          "name": "prepare_review"
+        },
+        "role": "tool_call"
+      },
+      {
+        "index": 9,
+        "payload": {
+          "content": "Return the structured result.",
+          "name": null,
+          "refusal": false,
+          "source_role": "user"
+        },
+        "role": "user"
+      },
+      {
+        "index": 10,
+        "payload": {
+          "content": {
+            "anomalies": 3,
+            "month": "2026-03",
+            "review_id": "local-review-17",
+            "rows": 1842
+          },
+          "name": null,
+          "refusal": false,
+          "source_role": null
+        },
+        "role": "assistant"
+      }
+    ],
+    "tokens_spent": 493
+  },
   "events": [
     {
       "index": 0,
@@ -128,6 +379,12 @@
   "provider": "openai",
   "recorded_at": "2026-08-17T12:00:00Z",
   "redactions": [],
+  "replay": {
+    "duration_ms": 7,
+    "network_calls": 0,
+    "provenance": "Deterministic local replay duration for reproducible evidence. No provider transport was constructed.",
+    "tokens": 0
+  },
   "request": {
     "messages": [
       {

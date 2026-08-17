@@ -83,6 +83,10 @@ class Redactor:
             self._walk(cassette.response_json, -1, "$.response_json", records),
         )
         data = cassette.model_dump(mode="json")
+        assertions = self._walk(data["assertions"], -1, "$.assertions", records)
+        drift = self._walk(data["drift"], -1, "$.drift", records)
+        replay = self._walk(data["replay"], -1, "$.replay", records)
+        provenance = self._walk(data["provenance"], -1, "$.provenance", records)
         data.update(
             {
                 "id": calculate_content_id(events),
@@ -91,6 +95,10 @@ class Redactor:
                 "response_json": response_json,
                 "events": [event.model_dump(mode="json") for event in events],
                 "redactions": [record.model_dump(mode="json") for record in records],
+                "assertions": assertions,
+                "drift": drift,
+                "replay": replay,
+                "provenance": provenance,
             }
         )
         return Cassette.model_validate(data)

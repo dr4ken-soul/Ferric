@@ -141,6 +141,88 @@ class RedactionRecord(BaseModel):
     field_path: str = Field(min_length=1)
 
 
+class AssertionFamily(StrEnum):
+    """Identify a behavioural assertion evidence family."""
+
+    SEQUENCE = "sequence"
+    ARGUMENTS = "arguments"
+    SCHEMA = "schema"
+    LEAKAGE = "leakage"
+
+
+class AssertionStatus(StrEnum):
+    """Record whether an evidenced assertion passed or failed."""
+
+    PASS = "pass"
+    FAIL = "fail"
+
+
+class AssertionEvidence(BaseModel):
+    """Store one deterministic behavioural assertion result."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    family: AssertionFamily
+    status: AssertionStatus
+    message: str = Field(min_length=1)
+    expected: JsonValue | None = None
+    observed: JsonValue | None = None
+    pattern: str | None = None
+    location: str | None = None
+
+
+class ReplayEvidence(BaseModel):
+    """Store measured or deterministic local replay evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    network_calls: int = Field(ge=0)
+    tokens: int = Field(ge=0)
+    duration_ms: int = Field(ge=0)
+    provenance: str = Field(min_length=1)
+
+
+class DriftClassification(StrEnum):
+    """Classify model behaviour relative to a recorded baseline."""
+
+    UNCHANGED = "unchanged"
+    REWORDED = "reworded"
+    DIVERGED = "diverged"
+
+
+class DriftDimension(StrEnum):
+    """Name the behavioural dimension that changed."""
+
+    TOOL_SELECTION = "tool_selection"
+    TOOL_ORDER = "tool_order"
+    SCHEMA_VALIDITY = "schema_validity"
+    REFUSAL = "refusal"
+
+
+class DriftEvidence(BaseModel):
+    """Store deterministic local drift evidence for one cassette."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    classification: DriftClassification
+    dimension: DriftDimension | None = None
+    baseline_events: list[Event] = Field(min_length=1)
+    target_events: list[Event] = Field(min_length=1)
+    tokens_spent: int = Field(ge=0)
+    provenance: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_dimension(self) -> DriftEvidence:
+        """Require a dimension only for divergent evidence."""
+
+        if self.classification is DriftClassification.DIVERGED:
+            if self.dimension is None:
+                raise ValueError("diverged drift evidence requires a dimension")
+        elif self.dimension is not None:
+            raise ValueError("only diverged drift evidence may have a dimension")
+        return self
+
+
 class Cassette(BaseModel):
     """Store one validated and replayable interaction."""
 
@@ -159,6 +241,9 @@ class Cassette(BaseModel):
     events: list[Event] = Field(min_length=1)
     redactions: list[RedactionRecord] = Field(default_factory=list)
     provenance: str | None = None
+    assertions: list[AssertionEvidence] = Field(default_factory=list)
+    drift: DriftEvidence | None = None
+    replay: ReplayEvidence | None = None
 
     @model_validator(mode="after")
     def validate_order_and_identifier(self) -> Cassette:
@@ -205,23 +290,6 @@ class Manifest(BaseModel):
         if len(identifiers) != len(set(identifiers)):
             raise ValueError("manifest contains duplicate cassette identifiers")
         return self
-
-
-class DriftClassification(StrEnum):
-    """Classify model behaviour relative to a recorded baseline."""
-
-    UNCHANGED = "unchanged"
-    REWORDED = "reworded"
-    DIVERGED = "diverged"
-
-
-class DriftDimension(StrEnum):
-    """Name the behavioural dimension that changed."""
-
-    TOOL_SELECTION = "tool_selection"
-    TOOL_ORDER = "tool_order"
-    SCHEMA_VALIDITY = "schema_validity"
-    REFUSAL = "refusal"
 
 
 class DriftResult(BaseModel):
