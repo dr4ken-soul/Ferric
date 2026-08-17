@@ -1,0 +1,30 @@
+{
+  "provenance": "Deterministic local recording from the Ferric ledger demo agent. It is not provider production traffic.",
+  "request": {
+    "model": "gpt-4.1-mini",
+    "messages": [
+      {"role": "system", "content": "Reconcile a local ledger and prepare review evidence."},
+      {"role": "user", "content": "Reconcile the March ledger."},
+      {"role": "assistant", "content": null, "tool_calls": [{"id": "call_read", "type": "function", "function": {"name": "read_ledger", "arguments": "{\"month\":\"2026-03\"}"}}]},
+      {"role": "tool", "tool_call_id": "call_read", "name": "read_ledger", "content": "{\"rows\":1842}"},
+      {"role": "assistant", "content": "The ledger is loaded. I will check the configured threshold.", "tool_calls": [{"id": "call_flag", "type": "function", "function": {"name": "flag_anomalies", "arguments": "{\"threshold\":0.04}"}}]},
+      {"role": "tool", "tool_call_id": "call_flag", "name": "flag_anomalies", "content": "{\"count\":3}"},
+      {"role": "assistant", "content": null, "tool_calls": [{"id": "call_review", "type": "function", "function": {"name": "prepare_review", "arguments": "{\"month\":\"2026-03\",\"count\":3}"}}]},
+      {"role": "tool", "tool_call_id": "call_review", "name": "prepare_review", "content": "{\"review_id\":\"local-review-17\"}"},
+      {"role": "user", "content": "Return the structured result."}
+    ],
+    "tools": [
+      {"type": "function", "function": {"name": "read_ledger", "parameters": {"type": "object", "properties": {"month": {"type": "string"}}, "required": ["month"]}}},
+      {"type": "function", "function": {"name": "flag_anomalies", "parameters": {"type": "object", "properties": {"threshold": {"type": "number"}}, "required": ["threshold"]}}},
+      {"type": "function", "function": {"name": "prepare_review", "parameters": {"type": "object", "properties": {"month": {"type": "string"}, "count": {"type": "integer"}}, "required": ["month", "count"]}}}
+    ]
+  },
+  "response": {
+    "id": "chatcmpl_local_001",
+    "object": "chat.completion",
+    "created": 1786924800,
+    "model": "gpt-4.1-mini",
+    "choices": [{"index": 0, "message": {"role": "assistant", "content": {"month": "2026-03", "rows": 1842, "anomalies": 3, "review_id": "local-review-17"}, "refusal": null}, "finish_reason": "stop"}],
+    "usage": {"prompt_tokens": 412, "completion_tokens": 44, "total_tokens": 456}
+  }
+}

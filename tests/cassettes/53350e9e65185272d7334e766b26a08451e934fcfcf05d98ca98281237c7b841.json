@@ -1,0 +1,60 @@
+{
+  "events": [
+    {
+      "index": 0,
+      "payload": {
+        "arguments": {
+          "month": "2026-03"
+        },
+        "call_id": "local-mcp-1",
+        "name": "read_ledger"
+      },
+      "role": "tool_call"
+    },
+    {
+      "index": 1,
+      "payload": {
+        "call_id": "local-mcp-1",
+        "content": {
+          "content": [
+            {
+              "text": "1842 rows",
+              "type": "text"
+            }
+          ],
+          "isError": false
+        },
+        "is_error": false,
+        "name": "read_ledger"
+      },
+      "role": "tool_result"
+    }
+  ],
+  "fingerprint": "2c67b99d4adbed73d8563a867cafa0162f3afe9082579e27859aaa79ff805445",
+  "id": "53350e9e65185272d7334e766b26a08451e934fcfcf05d98ca98281237c7b841",
+  "latency_ms": 3,
+  "model": "mcp-local",
+  "provenance": "Deterministic local Ferric demo fixture. Not provider or Kiro production traffic.",
+  "provider": "mcp",
+  "recorded_at": "2026-08-17T12:00:00Z",
+  "redactions": [],
+  "request": {
+    "id": "local-mcp-1",
+    "jsonrpc": "2.0",
+    "method": "read_ledger",
+    "params": {
+      "month": "2026-03"
+    }
+  },
+  "response": {
+    "content": [
+      {
+        "text": "1842 rows",
+        "type": "text"
+      }
+    ],
+    "isError": false
+  },
+  "response_json": null,
+  "response_kind": "mapping"
+}

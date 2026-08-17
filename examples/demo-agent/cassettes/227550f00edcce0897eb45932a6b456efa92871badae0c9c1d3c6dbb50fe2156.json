@@ -1,0 +1,49 @@
+{
+  "events": [
+    {
+      "index": 0,
+      "payload": {
+        "arguments": {
+          "count": 3,
+          "month": "2026-03"
+        },
+        "call_id": "demo-3",
+        "name": "prepare_review"
+      },
+      "role": "tool_call"
+    },
+    {
+      "index": 1,
+      "payload": {
+        "call_id": "demo-3",
+        "content": {
+          "review_id": "local-review-17"
+        },
+        "is_error": false,
+        "name": "prepare_review"
+      },
+      "role": "tool_result"
+    }
+  ],
+  "fingerprint": "97142ef44370a9eaf1d427af879cbc3ffbf6d6112d2524112573d479f6402f09",
+  "id": "227550f00edcce0897eb45932a6b456efa92871badae0c9c1d3c6dbb50fe2156",
+  "latency_ms": 3,
+  "model": "mcp-local",
+  "provenance": "Deterministic local Ferric demo fixture. Not provider or Kiro production traffic.",
+  "provider": "mcp",
+  "recorded_at": "2026-08-17T12:00:00Z",
+  "redactions": [],
+  "request": {
+    "id": "demo-3",
+    "method": "prepare_review",
+    "params": {
+      "count": 3,
+      "month": "2026-03"
+    }
+  },
+  "response": {
+    "review_id": "local-review-17"
+  },
+  "response_json": null,
+  "response_kind": "mapping"
+}

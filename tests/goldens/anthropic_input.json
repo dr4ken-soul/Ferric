@@ -1,0 +1,23 @@
+{
+  "provenance": "Deterministic local Anthropic-shaped recording from the Ferric ledger demo agent. It is not provider production traffic.",
+  "request": {
+    "model": "claude-3-5-haiku-latest",
+    "max_tokens": 256,
+    "system": "Use the local policy tool before answering.",
+    "messages": [
+      {"role": "user", "content": "Which review policy applies?"},
+      {"role": "assistant", "content": [{"type": "tool_use", "id": "toolu_local_1", "name": "fetch_policy", "input": {"policy_id": "ledger-review"}}]},
+      {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "toolu_local_1", "content": "Manual review is required above two anomalies."}]}
+    ],
+    "tools": [{"name": "fetch_policy", "description": "Read a local policy", "input_schema": {"type": "object", "properties": {"policy_id": {"type": "string"}}, "required": ["policy_id"]}}]
+  },
+  "response": {
+    "id": "msg_local_001",
+    "type": "message",
+    "role": "assistant",
+    "model": "claude-3-5-haiku-latest",
+    "content": [{"type": "text", "text": "Manual review applies because three anomalies were found."}],
+    "stop_reason": "end_turn",
+    "usage": {"input_tokens": 96, "output_tokens": 12}
+  }
+}

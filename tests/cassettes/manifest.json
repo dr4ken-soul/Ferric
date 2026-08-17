@@ -1,0 +1,25 @@
+{
+  "entries": [
+    {
+      "event_count": 2,
+      "id": "53350e9e65185272d7334e766b26a08451e934fcfcf05d98ca98281237c7b841",
+      "model": "mcp-local",
+      "provider": "mcp",
+      "recorded_at": "2026-08-17T12:00:00Z"
+    },
+    {
+      "event_count": 11,
+      "id": "7390cec8b7a3c6af2cc1e019ae3d62d2ac8115c18451dc1f22669247c65c9fd2",
+      "model": "gpt-4.1-mini",
+      "provider": "openai",
+      "recorded_at": "2026-08-17T12:00:00Z"
+    },
+    {
+      "event_count": 5,
+      "id": "c6d2362744e16413e9109295bb45e90ed5d2c69ec7ba0b1d1568c78305d40601",
+      "model": "claude-3-5-haiku-latest",
+      "provider": "anthropic",
+      "recorded_at": "2026-08-17T12:00:00Z"
+    }
+  ]
+}

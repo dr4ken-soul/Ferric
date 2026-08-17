@@ -1,0 +1,25 @@
+{
+  "entries": [
+    {
+      "event_count": 2,
+      "id": "227550f00edcce0897eb45932a6b456efa92871badae0c9c1d3c6dbb50fe2156",
+      "model": "mcp-local",
+      "provider": "mcp",
+      "recorded_at": "2026-08-17T12:00:00Z"
+    },
+    {
+      "event_count": 2,
+      "id": "5aedf9a5acadeabec0b99a9ee145bb0f3952ea7583bf1052540c3b6d2925571c",
+      "model": "mcp-local",
+      "provider": "mcp",
+      "recorded_at": "2026-08-17T12:00:00Z"
+    },
+    {
+      "event_count": 2,
+      "id": "e5ae785c54955cc7dba57f437fb6bf9ee18151e753a94bea78189e11d2bfb204",
+      "model": "mcp-local",
+      "provider": "mcp",
+      "recorded_at": "2026-08-17T12:00:00Z"
+    }
+  ]
+}

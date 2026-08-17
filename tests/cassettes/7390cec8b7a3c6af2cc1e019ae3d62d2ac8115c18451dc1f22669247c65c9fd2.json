@@ -1,0 +1,294 @@
+{
+  "events": [
+    {
+      "index": 0,
+      "payload": {
+        "content": "Reconcile a local ledger and prepare review evidence.",
+        "name": null,
+        "refusal": false,
+        "source_role": "system"
+      },
+      "role": "user"
+    },
+    {
+      "index": 1,
+      "payload": {
+        "content": "Reconcile the March ledger.",
+        "name": null,
+        "refusal": false,
+        "source_role": "user"
+      },
+      "role": "user"
+    },
+    {
+      "index": 2,
+      "payload": {
+        "arguments": {
+          "month": "2026-03"
+        },
+        "call_id": "call_read",
+        "name": "read_ledger"
+      },
+      "role": "tool_call"
+    },
+    {
+      "index": 3,
+      "payload": {
+        "call_id": "call_read",
+        "content": "{\"rows\":1842}",
+        "is_error": false,
+        "name": "read_ledger"
+      },
+      "role": "tool_result"
+    },
+    {
+      "index": 4,
+      "payload": {
+        "content": "The ledger is loaded. I will check the configured threshold.",
+        "name": null,
+        "refusal": false,
+        "source_role": "assistant"
+      },
+      "role": "assistant"
+    },
+    {
+      "index": 5,
+      "payload": {
+        "arguments": {
+          "threshold": 0.04
+        },
+        "call_id": "call_flag",
+        "name": "flag_anomalies"
+      },
+      "role": "tool_call"
+    },
+    {
+      "index": 6,
+      "payload": {
+        "call_id": "call_flag",
+        "content": "{\"count\":3}",
+        "is_error": false,
+        "name": "flag_anomalies"
+      },
+      "role": "tool_result"
+    },
+    {
+      "index": 7,
+      "payload": {
+        "arguments": {
+          "count": 3,
+          "month": "2026-03"
+        },
+        "call_id": "call_review",
+        "name": "prepare_review"
+      },
+      "role": "tool_call"
+    },
+    {
+      "index": 8,
+      "payload": {
+        "call_id": "call_review",
+        "content": "{\"review_id\":\"local-review-17\"}",
+        "is_error": false,
+        "name": "prepare_review"
+      },
+      "role": "tool_result"
+    },
+    {
+      "index": 9,
+      "payload": {
+        "content": "Return the structured result.",
+        "name": null,
+        "refusal": false,
+        "source_role": "user"
+      },
+      "role": "user"
+    },
+    {
+      "index": 10,
+      "payload": {
+        "content": {
+          "anomalies": 3,
+          "month": "2026-03",
+          "review_id": "local-review-17",
+          "rows": 1842
+        },
+        "name": null,
+        "refusal": false,
+        "source_role": null
+      },
+      "role": "assistant"
+    }
+  ],
+  "fingerprint": "fa338018e60c577a5bcd46720a0776def07b1c48e5c86708f7bd6fd2bf46c6bd",
+  "id": "7390cec8b7a3c6af2cc1e019ae3d62d2ac8115c18451dc1f22669247c65c9fd2",
+  "latency_ms": 184,
+  "model": "gpt-4.1-mini",
+  "provenance": "Deterministic local Ferric demo fixture. Not provider or Kiro production traffic.",
+  "provider": "openai",
+  "recorded_at": "2026-08-17T12:00:00Z",
+  "redactions": [],
+  "request": {
+    "messages": [
+      {
+        "content": "Reconcile a local ledger and prepare review evidence.",
+        "role": "system"
+      },
+      {
+        "content": "Reconcile the March ledger.",
+        "role": "user"
+      },
+      {
+        "content": null,
+        "role": "assistant",
+        "tool_calls": [
+          {
+            "function": {
+              "arguments": "{\"month\":\"2026-03\"}",
+              "name": "read_ledger"
+            },
+            "id": "call_read",
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "content": "{\"rows\":1842}",
+        "name": "read_ledger",
+        "role": "tool",
+        "tool_call_id": "call_read"
+      },
+      {
+        "content": "The ledger is loaded. I will check the configured threshold.",
+        "role": "assistant",
+        "tool_calls": [
+          {
+            "function": {
+              "arguments": "{\"threshold\":0.04}",
+              "name": "flag_anomalies"
+            },
+            "id": "call_flag",
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "content": "{\"count\":3}",
+        "name": "flag_anomalies",
+        "role": "tool",
+        "tool_call_id": "call_flag"
+      },
+      {
+        "content": null,
+        "role": "assistant",
+        "tool_calls": [
+          {
+            "function": {
+              "arguments": "{\"month\":\"2026-03\",\"count\":3}",
+              "name": "prepare_review"
+            },
+            "id": "call_review",
+            "type": "function"
+          }
+        ]
+      },
+      {
+        "content": "{\"review_id\":\"local-review-17\"}",
+        "name": "prepare_review",
+        "role": "tool",
+        "tool_call_id": "call_review"
+      },
+      {
+        "content": "Return the structured result.",
+        "role": "user"
+      }
+    ],
+    "model": "gpt-4.1-mini",
+    "tools": [
+      {
+        "function": {
+          "name": "read_ledger",
+          "parameters": {
+            "properties": {
+              "month": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "month"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "name": "flag_anomalies",
+          "parameters": {
+            "properties": {
+              "threshold": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "threshold"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      },
+      {
+        "function": {
+          "name": "prepare_review",
+          "parameters": {
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "month": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "month",
+              "count"
+            ],
+            "type": "object"
+          }
+        },
+        "type": "function"
+      }
+    ]
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "content": {
+            "anomalies": 3,
+            "month": "2026-03",
+            "review_id": "local-review-17",
+            "rows": 1842
+          },
+          "refusal": null,
+          "role": "assistant"
+        }
+      }
+    ],
+    "created": 1786924800,
+    "id": "chatcmpl_local_001",
+    "model": "gpt-4.1-mini",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 44,
+      "prompt_tokens": 412,
+      "total_tokens": 456
+    }
+  },
+  "response_json": null,
+  "response_kind": "mapping"
+}

@@ -1,0 +1,13 @@
+[
+  {"index": 0, "role": "user", "payload": {"content": "Reconcile a local ledger and prepare review evidence.", "name": null, "source_role": "system", "refusal": false}},
+  {"index": 1, "role": "user", "payload": {"content": "Reconcile the March ledger.", "name": null, "source_role": "user", "refusal": false}},
+  {"index": 2, "role": "tool_call", "payload": {"name": "read_ledger", "arguments": {"month": "2026-03"}, "call_id": "call_read"}},
+  {"index": 3, "role": "tool_result", "payload": {"content": "{\"rows\":1842}", "name": "read_ledger", "call_id": "call_read", "is_error": false}},
+  {"index": 4, "role": "assistant", "payload": {"content": "The ledger is loaded. I will check the configured threshold.", "name": null, "source_role": "assistant", "refusal": false}},
+  {"index": 5, "role": "tool_call", "payload": {"name": "flag_anomalies", "arguments": {"threshold": 0.04}, "call_id": "call_flag"}},
+  {"index": 6, "role": "tool_result", "payload": {"content": "{\"count\":3}", "name": "flag_anomalies", "call_id": "call_flag", "is_error": false}},
+  {"index": 7, "role": "tool_call", "payload": {"name": "prepare_review", "arguments": {"month": "2026-03", "count": 3}, "call_id": "call_review"}},
+  {"index": 8, "role": "tool_result", "payload": {"content": "{\"review_id\":\"local-review-17\"}", "name": "prepare_review", "call_id": "call_review", "is_error": false}},
+  {"index": 9, "role": "user", "payload": {"content": "Return the structured result.", "name": null, "source_role": "user", "refusal": false}},
+  {"index": 10, "role": "assistant", "payload": {"content": {"month": "2026-03", "rows": 1842, "anomalies": 3, "review_id": "local-review-17"}, "name": null, "source_role": null, "refusal": false}}
+]

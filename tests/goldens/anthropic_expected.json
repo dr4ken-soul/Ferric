@@ -1,0 +1,7 @@
+[
+  {"index": 0, "role": "user", "payload": {"content": "Use the local policy tool before answering.", "name": null, "source_role": "system", "refusal": false}},
+  {"index": 1, "role": "user", "payload": {"content": "Which review policy applies?", "name": null, "source_role": "user", "refusal": false}},
+  {"index": 2, "role": "tool_call", "payload": {"name": "fetch_policy", "arguments": {"policy_id": "ledger-review"}, "call_id": "toolu_local_1"}},
+  {"index": 3, "role": "tool_result", "payload": {"content": "Manual review is required above two anomalies.", "name": null, "call_id": "toolu_local_1", "is_error": false}},
+  {"index": 4, "role": "assistant", "payload": {"content": "Manual review applies because three anomalies were found.", "name": null, "source_role": null, "refusal": false}}
+]

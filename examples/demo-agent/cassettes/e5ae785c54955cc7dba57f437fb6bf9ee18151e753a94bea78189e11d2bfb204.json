@@ -1,0 +1,47 @@
+{
+  "events": [
+    {
+      "index": 0,
+      "payload": {
+        "arguments": {
+          "threshold": 0.04
+        },
+        "call_id": "demo-2",
+        "name": "flag_anomalies"
+      },
+      "role": "tool_call"
+    },
+    {
+      "index": 1,
+      "payload": {
+        "call_id": "demo-2",
+        "content": {
+          "count": 3
+        },
+        "is_error": false,
+        "name": "flag_anomalies"
+      },
+      "role": "tool_result"
+    }
+  ],
+  "fingerprint": "cac7db092a8e13682d00b99d5fd32e0aff46a5f6be620d4670f94220dd2296f9",
+  "id": "e5ae785c54955cc7dba57f437fb6bf9ee18151e753a94bea78189e11d2bfb204",
+  "latency_ms": 2,
+  "model": "mcp-local",
+  "provenance": "Deterministic local Ferric demo fixture. Not provider or Kiro production traffic.",
+  "provider": "mcp",
+  "recorded_at": "2026-08-17T12:00:00Z",
+  "redactions": [],
+  "request": {
+    "id": "demo-2",
+    "method": "flag_anomalies",
+    "params": {
+      "threshold": 0.04
+    }
+  },
+  "response": {
+    "count": 3
+  },
+  "response_json": null,
+  "response_kind": "mapping"
+}

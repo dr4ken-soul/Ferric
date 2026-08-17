@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ferric"
+version = "0.1.0"
+description = "Offline recording and behavioural replay for LLM and agent traffic."
+readme = "CLAUDE.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Ferric contributors" }]
+dependencies = [
+  "pydantic>=2.7,<3",
+  "typer>=0.12,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.11",
+  "pytest>=8.2",
+  "pytest-cov>=5",
+  "ruff>=0.6",
+]
+openai = ["openai>=1.40"]
+anthropic = ["anthropic>=0.34"]
+
+[project.scripts]
+ferric = "ferric.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ferric"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers"
+testpaths = ["tests"]
+norecursedirs = ["tests/drift"]
+markers = ["drift: live provider tests excluded from the default suite"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "D"]
+ignore = ["D202", "D203", "D213", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D100", "D101", "D102", "D103", "D104", "D107"]
+"examples/demo-agent/**/*.py" = ["D103"]
+"scripts/check_offline.py" = ["I001", "UP035"]
+"scripts/check_redaction.py" = ["I001", "UP035"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["ferric"]
+warn_unreachable = true

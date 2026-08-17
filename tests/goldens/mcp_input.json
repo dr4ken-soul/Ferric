@@ -1,0 +1,5 @@
+{
+  "provenance": "Deterministic local MCP tools/call exchange from the Ferric demo agent. It is not Kiro production capture.",
+  "request": {"jsonrpc": "2.0", "id": "local-mcp-1", "method": "read_ledger", "params": {"month": "2026-03"}},
+  "response": {"content": [{"type": "text", "text": "1842 rows"}], "isError": false}
+}

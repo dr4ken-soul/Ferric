@@ -1,0 +1,133 @@
+{
+  "events": [
+    {
+      "index": 0,
+      "payload": {
+        "content": "Use the local policy tool before answering.",
+        "name": null,
+        "refusal": false,
+        "source_role": "system"
+      },
+      "role": "user"
+    },
+    {
+      "index": 1,
+      "payload": {
+        "content": "Which review policy applies?",
+        "name": null,
+        "refusal": false,
+        "source_role": "user"
+      },
+      "role": "user"
+    },
+    {
+      "index": 2,
+      "payload": {
+        "arguments": {
+          "policy_id": "ledger-review"
+        },
+        "call_id": "toolu_local_1",
+        "name": "fetch_policy"
+      },
+      "role": "tool_call"
+    },
+    {
+      "index": 3,
+      "payload": {
+        "call_id": "toolu_local_1",
+        "content": "Manual review is required above two anomalies.",
+        "is_error": false,
+        "name": null
+      },
+      "role": "tool_result"
+    },
+    {
+      "index": 4,
+      "payload": {
+        "content": "Manual review applies because three anomalies were found.",
+        "name": null,
+        "refusal": false,
+        "source_role": null
+      },
+      "role": "assistant"
+    }
+  ],
+  "fingerprint": "e3b83ae03979a51546ab300ff86e07ae34ee2da4f452d167591301ddc77b7b7f",
+  "id": "c6d2362744e16413e9109295bb45e90ed5d2c69ec7ba0b1d1568c78305d40601",
+  "latency_ms": 211,
+  "model": "claude-3-5-haiku-latest",
+  "provenance": "Deterministic local Ferric demo fixture. Not provider or Kiro production traffic.",
+  "provider": "anthropic",
+  "recorded_at": "2026-08-17T12:00:00Z",
+  "redactions": [],
+  "request": {
+    "max_tokens": 256,
+    "messages": [
+      {
+        "content": "Which review policy applies?",
+        "role": "user"
+      },
+      {
+        "content": [
+          {
+            "id": "toolu_local_1",
+            "input": {
+              "policy_id": "ledger-review"
+            },
+            "name": "fetch_policy",
+            "type": "tool_use"
+          }
+        ],
+        "role": "assistant"
+      },
+      {
+        "content": [
+          {
+            "content": "Manual review is required above two anomalies.",
+            "tool_use_id": "toolu_local_1",
+            "type": "tool_result"
+          }
+        ],
+        "role": "user"
+      }
+    ],
+    "model": "claude-3-5-haiku-latest",
+    "system": "Use the local policy tool before answering.",
+    "tools": [
+      {
+        "description": "Read a local policy",
+        "input_schema": {
+          "properties": {
+            "policy_id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "policy_id"
+          ],
+          "type": "object"
+        },
+        "name": "fetch_policy"
+      }
+    ]
+  },
+  "response": {
+    "content": [
+      {
+        "text": "Manual review applies because three anomalies were found.",
+        "type": "text"
+      }
+    ],
+    "id": "msg_local_001",
+    "model": "claude-3-5-haiku-latest",
+    "role": "assistant",
+    "stop_reason": "end_turn",
+    "type": "message",
+    "usage": {
+      "input_tokens": 96,
+      "output_tokens": 12
+    }
+  },
+  "response_json": null,
+  "response_kind": "mapping"
+}
