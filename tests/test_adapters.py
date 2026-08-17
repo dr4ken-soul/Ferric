@@ -75,3 +75,17 @@ def test_openai_invalid_argument_json_is_retained_safely() -> None:
     }
     events = normalise_openai(request, {"choices": []})
     assert events[0].payload.arguments == {"_raw": "not json"}
+
+
+def test_standard_mcp_tools_call_matches_golden(golden_dir: Path) -> None:
+    fixture = json.loads(
+        (golden_dir / "mcp_standard_input.json").read_text(encoding="utf-8")
+    )
+    expected = json.loads(
+        (golden_dir / "mcp_standard_expected.json").read_text(encoding="utf-8")
+    )
+    observed = [
+        event.model_dump(mode="json")
+        for event in normalise_mcp(fixture["request"], fixture["response"])
+    ]
+    assert observed == expected

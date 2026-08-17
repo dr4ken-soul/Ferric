@@ -1,0 +1,119 @@
+{
+  "assertions": [],
+  "drift": {
+    "baseline_events": [
+      {
+        "index": 0,
+        "payload": {
+          "content": "Summarise the local review state.",
+          "name": null,
+          "refusal": false,
+          "source_role": "user"
+        },
+        "role": "user"
+      },
+      {
+        "index": 1,
+        "payload": {
+          "content": "Three anomalies are ready for local review.",
+          "name": null,
+          "refusal": false,
+          "source_role": null
+        },
+        "role": "assistant"
+      }
+    ],
+    "classification": "unchanged",
+    "dimension": null,
+    "provenance": "Deterministic local drift classification. Not a live provider capture.",
+    "target_events": [
+      {
+        "index": 0,
+        "payload": {
+          "content": "Summarise the local review state.",
+          "name": null,
+          "refusal": false,
+          "source_role": "user"
+        },
+        "role": "user"
+      },
+      {
+        "index": 1,
+        "payload": {
+          "content": "Three anomalies are ready for local review.",
+          "name": null,
+          "refusal": false,
+          "source_role": null
+        },
+        "role": "assistant"
+      }
+    ],
+    "tokens_spent": 0
+  },
+  "events": [
+    {
+      "index": 0,
+      "payload": {
+        "content": "Summarise the local review state.",
+        "name": null,
+        "refusal": false,
+        "source_role": "user"
+      },
+      "role": "user"
+    },
+    {
+      "index": 1,
+      "payload": {
+        "content": "Three anomalies are ready for local review.",
+        "name": null,
+        "refusal": false,
+        "source_role": null
+      },
+      "role": "assistant"
+    }
+  ],
+  "fingerprint": "a33b4abce635a7ef7fb589700aa1c96458214ff4a03815bf8c822b2bb0c3ac81",
+  "id": "16774fa5337d9edce15710a7d5204d8f6502d007085f8d07e7a39509b4489dca",
+  "integrity_hash": "7487e0ae5b7dc9b47f8111f490b7c3bef1689c2a0ea947bd7268c6b622fa31c4",
+  "latency_ms": 47,
+  "model": "gpt-4.1-mini",
+  "provenance": "Deterministic local Ferric demo fixture. Not provider or Kiro production traffic.",
+  "provider": "openai",
+  "recorded_at": "2026-08-17T12:00:00Z",
+  "redactions": [],
+  "replay": null,
+  "request": {
+    "messages": [
+      {
+        "content": "Summarise the local review state.",
+        "role": "user"
+      }
+    ],
+    "model": "gpt-4.1-mini",
+    "tools": []
+  },
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "content": "Three anomalies are ready for local review.",
+          "refusal": null,
+          "role": "assistant"
+        }
+      }
+    ],
+    "created": 1786924800,
+    "id": "chatcmpl_local_unchanged",
+    "model": "gpt-4.1-mini",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 9,
+      "prompt_tokens": 18,
+      "total_tokens": 27
+    }
+  },
+  "response_json": null,
+  "response_kind": "mapping"
+}

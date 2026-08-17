@@ -12,7 +12,11 @@ from ferric.assertions import (
     assert_tool_arguments,
     assert_tool_sequence,
 )
-from ferric.schema import Cassette, calculate_content_id
+from ferric.schema import (
+    Cassette,
+    calculate_content_id,
+    calculate_integrity_hash_payload,
+)
 
 
 def _changed(cassette: Cassette, change: Any) -> Cassette:
@@ -24,6 +28,7 @@ def _changed(cassette: Cassette, change: Any) -> Cassette:
 
     events = TypeAdapter(list[Event]).validate_python(data["events"])
     data["id"] = calculate_content_id(events)
+    data["integrity_hash"] = calculate_integrity_hash_payload(data)
     return Cassette.model_validate(data)
 
 
@@ -110,6 +115,7 @@ def test_no_leakage_passes(sample_cassette: Cassette) -> None:
 def test_no_leakage_inspects_tool_definitions(sample_cassette: Cassette) -> None:
     data = sample_cassette.model_dump(mode="json")
     data["request"]["tools"][0]["description"] = "private-739124"
+    data["integrity_hash"] = calculate_integrity_hash_payload(data)
     cassette = Cassette.model_validate(data)
     with pytest.raises(FerricAssertionError) as failure:
         assert_no_leakage(cassette, {"private_identifier": r"private-[0-9]+"})
@@ -127,3 +133,33 @@ def test_no_leakage_reports_safe_location_not_value(sample_cassette: Cassette) -
     message = str(failure.value)
     assert "event 1" in message and "$.content" in message
     assert "739124" not in message
+
+
+def test_no_leakage_detects_numeric_and_mapping_key_values(
+    sample_cassette: Cassette,
+) -> None:
+    data = sample_cassette.model_dump(mode="json")
+    data["request"]["4111111111111111"] = "safe"
+    data["request"]["numeric_card"] = 5555555555554444
+    data["integrity_hash"] = calculate_integrity_hash_payload(data)
+    cassette = Cassette.model_validate(data)
+    with pytest.raises(FerricAssertionError) as failure:
+        assert_no_leakage(cassette, {"card": r"(?<!\d)\d{16}(?!\d)"})
+    message = str(failure.value)
+    assert "<key>" in message
+    assert "4111111111111111" not in message
+    assert "5555555555554444" not in message
+
+
+def test_assertion_diagnostics_redact_sensitive_expected_values(
+    sample_cassette: Cassette,
+) -> None:
+    with pytest.raises(FerricAssertionError) as failure:
+        assert_tool_arguments(
+            sample_cassette,
+            "read_ledger",
+            {"month": "sk-local-diagnostic-secret"},
+        )
+    message = str(failure.value)
+    assert "[REDACTED:api_key]" in message
+    assert "sk-local-diagnostic-secret" not in message

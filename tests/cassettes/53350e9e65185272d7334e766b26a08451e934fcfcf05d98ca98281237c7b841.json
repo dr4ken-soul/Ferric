@@ -1,37 +1,6 @@
 {
   "assertions": [],
-  "drift": {
-    "baseline_events": [
-      {
-        "index": 0,
-        "payload": {
-          "arguments": {
-            "month": "2026-03"
-          },
-          "call_id": "local-mcp-1",
-          "name": "read_ledger"
-        },
-        "role": "tool_call"
-      }
-    ],
-    "classification": "unchanged",
-    "dimension": null,
-    "provenance": "Deterministic local drift classification. Not a live provider capture.",
-    "target_events": [
-      {
-        "index": 0,
-        "payload": {
-          "arguments": {
-            "month": "2026-03"
-          },
-          "call_id": "local-mcp-1",
-          "name": "read_ledger"
-        },
-        "role": "tool_call"
-      }
-    ],
-    "tokens_spent": 0
-  },
+  "drift": null,
   "events": [
     {
       "index": 0,
@@ -63,8 +32,9 @@
       "role": "tool_result"
     }
   ],
-  "fingerprint": "2c67b99d4adbed73d8563a867cafa0162f3afe9082579e27859aaa79ff805445",
+  "fingerprint": "844cfa9d2c1eb4831d3d3266fb7e3c775038308caeaf5da75ba604092f346e0b",
   "id": "53350e9e65185272d7334e766b26a08451e934fcfcf05d98ca98281237c7b841",
+  "integrity_hash": "05666fc64b364cd100d135324e01b5138f9f137586a117a77116997d44042baa",
   "latency_ms": 3,
   "model": "mcp-local",
   "provenance": "Deterministic local Ferric demo fixture. Not provider or Kiro production traffic.",

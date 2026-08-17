@@ -1,0 +1,28 @@
+{
+  "provenance": "Deterministic local OpenAI-shaped baseline for unchanged drift evidence. It is not provider production traffic.",
+  "request": {
+    "model": "gpt-4.1-mini",
+    "messages": [
+      {"role": "user", "content": "Summarise the local review state."}
+    ],
+    "tools": []
+  },
+  "response": {
+    "id": "chatcmpl_local_unchanged",
+    "object": "chat.completion",
+    "created": 1786924800,
+    "model": "gpt-4.1-mini",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "Three anomalies are ready for local review.",
+          "refusal": null
+        },
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {"prompt_tokens": 18, "completion_tokens": 9, "total_tokens": 27}
+  }
+}

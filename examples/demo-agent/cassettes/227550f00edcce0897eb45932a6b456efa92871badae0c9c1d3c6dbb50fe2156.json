@@ -27,8 +27,9 @@
       "role": "tool_result"
     }
   ],
-  "fingerprint": "97142ef44370a9eaf1d427af879cbc3ffbf6d6112d2524112573d479f6402f09",
+  "fingerprint": "69d8a2c4528a750172e6fe126a84e8c5fb5b5765a24f61818b4b934f44093759",
   "id": "227550f00edcce0897eb45932a6b456efa92871badae0c9c1d3c6dbb50fe2156",
+  "integrity_hash": "833e29e84ab21808707a914bee3f3e6e65aeb852758578fd237837213b8f8d3d",
   "latency_ms": 3,
   "model": "mcp-local",
   "provenance": "Deterministic local Ferric demo fixture. Not provider or Kiro production traffic.",

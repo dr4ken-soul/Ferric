@@ -14,6 +14,7 @@ from ferric.schema import (
     Event,
     RedactionRecord,
     calculate_content_id,
+    calculate_integrity_hash_payload,
 )
 
 
@@ -101,6 +102,7 @@ class Redactor:
                 "provenance": provenance,
             }
         )
+        data["integrity_hash"] = calculate_integrity_hash_payload(data)
         return Cassette.model_validate(data)
 
     def find_sensitive(self, value: Any, path: str = "$") -> list[tuple[str, str]]:
@@ -139,6 +141,10 @@ class Redactor:
     ) -> Any:
         if isinstance(value, str):
             return self._replace(value, event_index, path, records)
+        if isinstance(value, int) and not isinstance(value, bool):
+            rendered = str(value)
+            replaced = self._replace(rendered, event_index, path, records)
+            return value if replaced == rendered else replaced
         if isinstance(value, dict):
             redacted: dict[str, Any] = {}
             for key, child in value.items():
@@ -169,13 +175,21 @@ class Redactor:
             for rule in self.rules:
                 if rule.pattern.search(value):
                     findings.append((path, rule.rule_class))
+        elif isinstance(value, int) and not isinstance(value, bool):
+            rendered = str(value)
+            for rule in self.rules:
+                if rule.pattern.search(rendered):
+                    findings.append((path, rule.rule_class))
         elif isinstance(value, dict):
             for key, child in value.items():
                 key_text = str(key)
+                key_sensitive = False
                 for rule in self.rules:
                     if rule.pattern.search(key_text):
                         findings.append((f"{path}.<key>", rule.rule_class))
-                self._scan(child, f"{path}.{key_text}", findings)
+                        key_sensitive = True
+                safe_key = "<redacted-key>" if key_sensitive else key_text
+                self._scan(child, f"{path}.{safe_key}", findings)
         elif isinstance(value, list):
             for index, child in enumerate(value):
                 self._scan(child, f"{path}[{index}]", findings)

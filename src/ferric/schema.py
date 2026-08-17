@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Mapping
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 
@@ -131,6 +132,36 @@ def calculate_content_id(events: list[Event]) -> str:
     return hashlib.sha256(canonical).hexdigest()
 
 
+def calculate_integrity_hash_payload(payload: Mapping[str, Any]) -> str:
+    """Hash the cassette fields that must remain tamper-evident."""
+
+    covered = {
+        key: payload.get(key)
+        for key in (
+            "provider",
+            "model",
+            "fingerprint",
+            "request",
+            "response",
+            "response_kind",
+            "response_json",
+            "events",
+            "redactions",
+            "assertions",
+            "drift",
+            "replay",
+        )
+    }
+    canonical = json.dumps(
+        covered,
+        default=lambda value: value.model_dump(mode="json"),
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
 class RedactionRecord(BaseModel):
     """Describe one removed value without retaining that value."""
 
@@ -229,6 +260,7 @@ class Cassette(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str = Field(pattern=r"^[0-9a-f]{64}$")
+    integrity_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     provider: Literal["openai", "anthropic", "mcp"]
     model: str = Field(min_length=1)
     recorded_at: datetime
@@ -258,6 +290,11 @@ class Cassette(BaseModel):
         expected = calculate_content_id(self.events)
         if self.id != expected:
             raise ValueError("cassette identifier does not match its events")
+        expected_integrity = calculate_integrity_hash_payload(
+            self.model_dump(mode="json", exclude={"integrity_hash"})
+        )
+        if self.integrity_hash != expected_integrity:
+            raise ValueError("cassette integrity hash does not match its contents")
         if self.recorded_at.tzinfo is None:
             raise ValueError("recorded_at must include a timezone")
         return self
@@ -314,3 +351,29 @@ class DriftResult(BaseModel):
         elif self.dimension is not None:
             raise ValueError("only diverged results may have a dimension")
         return self
+
+
+class DriftSkipped(BaseModel):
+    """Describe a cassette excluded from a live drift classification."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    cassette_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+    reason: str = Field(min_length=1)
+
+
+class DriftRun(BaseModel):
+    """Store classified and explicitly skipped drift inputs."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    target_provider: Literal["openai", "anthropic"]
+    target_model: str = Field(min_length=1)
+    results: list[DriftResult] = Field(default_factory=list)
+    skipped: list[DriftSkipped] = Field(default_factory=list)
+
+    @property
+    def tokens_spent(self) -> int:
+        """Return tokens spent by classified provider calls only."""
+
+        return sum(result.tokens_spent for result in self.results)

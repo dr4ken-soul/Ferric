@@ -2,8 +2,12 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
-from ferric.drift import classify_drift
+import pytest
+
+from ferric.drift import DriftProviderError, classify_drift, run_drift
 from ferric.report import render_drift_report, write_drift_report
 from ferric.schema import (
     AssistantMessage,
@@ -13,6 +17,7 @@ from ferric.schema import (
     MessagePayload,
     ToolCall,
 )
+from ferric.store import CassetteStore
 
 
 def test_drift_classifies_unchanged(sample_cassette: Cassette) -> None:
@@ -26,7 +31,16 @@ def test_drift_classifies_reworded(sample_cassette: Cassette) -> None:
     assistant = events[-1]
     assert isinstance(assistant, AssistantMessage)
     events[-1] = assistant.model_copy(
-        update={"payload": MessagePayload(content={"summary": "wording moved"})}
+        update={
+            "payload": MessagePayload(
+                content={
+                    "month": "March 2026",
+                    "rows": 1842,
+                    "anomalies": 3,
+                    "review_id": "local-review-17",
+                }
+            )
+        }
     )
     result = classify_drift(sample_cassette, events, 23)
     assert result.classification is DriftClassification.REWORDED
@@ -70,6 +84,21 @@ def test_drift_classifies_schema_validity(sample_cassette: Cassette) -> None:
         update={"payload": MessagePayload(content="not structured output")}
     )
     result = classify_drift(sample_cassette, events, 37)
+    assert result.dimension is DriftDimension.SCHEMA_VALIDITY
+
+
+def test_drift_classifies_recursive_integer_to_string_as_schema(
+    sample_cassette: Cassette,
+) -> None:
+    events = [event.model_copy(deep=True) for event in sample_cassette.events]
+    assistant = events[-1]
+    assert isinstance(assistant, AssistantMessage)
+    content = dict(assistant.payload.content)
+    content["anomalies"] = "3"
+    events[-1] = assistant.model_copy(
+        update={"payload": MessagePayload(content=content)}
+    )
+    result = classify_drift(sample_cassette, events, 0)
     assert result.dimension is DriftDimension.SCHEMA_VALIDITY
 
 
@@ -124,3 +153,55 @@ def test_report_writes_atomically(tmp_path: Path, sample_cassette: Cassette) -> 
         target_model="local-b",
     )
     assert path.read_text(encoding="utf-8").startswith("<!doctype html>")
+
+
+class _FakeDriftEndpoint:
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
+    def create(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append(kwargs)
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "deterministic target response",
+                    }
+                }
+            ],
+            "usage": {"total_tokens": 10},
+        }
+
+
+def test_run_drift_uses_explicit_provider_and_skips_mcp(cassette_dir: Path) -> None:
+    endpoint = _FakeDriftEndpoint()
+    client = SimpleNamespace(chat=SimpleNamespace(completions=endpoint))
+    run = run_drift(
+        CassetteStore(cassette_dir),
+        "gpt-local-target",
+        target_provider="openai",
+        client=client,
+    )
+    assert run.target_provider == "openai"
+    assert len(run.results) == 3
+    assert len(run.skipped) == 1
+    assert "MCP tool exchange" in run.skipped[0].reason
+    assert run.tokens_spent == 30
+    assert len(endpoint.calls) == 3
+    assert all(call["model"] == "gpt-local-target" for call in endpoint.calls)
+
+
+def test_run_drift_converts_missing_sdk_to_domain_error(
+    cassette_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def missing_sdk() -> Any:
+        raise ImportError("openai is absent")
+
+    monkeypatch.setattr("ferric.drift.create_openai_client", missing_sdk)
+    with pytest.raises(DriftProviderError, match="openai.*extra"):
+        run_drift(
+            CassetteStore(cassette_dir),
+            "gpt-local-target",
+            target_provider="openai",
+        )

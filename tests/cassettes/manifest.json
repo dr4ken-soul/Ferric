@@ -2,6 +2,13 @@
   "entries": [
     {
       "event_count": 2,
+      "id": "16774fa5337d9edce15710a7d5204d8f6502d007085f8d07e7a39509b4489dca",
+      "model": "gpt-4.1-mini",
+      "provider": "openai",
+      "recorded_at": "2026-08-17T12:00:00Z"
+    },
+    {
+      "event_count": 2,
       "id": "53350e9e65185272d7334e766b26a08451e934fcfcf05d98ca98281237c7b841",
       "model": "mcp-local",
       "provider": "mcp",

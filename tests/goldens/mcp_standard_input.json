@@ -1,0 +1,20 @@
+{
+  "provenance": "Deterministic local standard MCP JSON-RPC tools/call exchange.",
+  "request": {
+    "jsonrpc": "2.0",
+    "id": 17,
+    "method": "tools/call",
+    "params": {
+      "name": "read_ledger",
+      "arguments": {"month": "2026-03"}
+    }
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 17,
+    "result": {
+      "content": [{"type": "text", "text": "1842 rows"}],
+      "isError": false
+    }
+  }
+}

@@ -14,7 +14,7 @@
         "flag_anomalies",
         "prepare_review"
       ],
-      "pattern": null,
+      "pattern": "[REDACTED:api_key]",
       "status": "pass"
     },
     {
@@ -35,7 +35,7 @@
       "status": "fail"
     },
     {
-      "expected": null,
+      "expected": "[REDACTED:card]",
       "family": "arguments",
       "location": null,
       "message": "critical month and threshold fields matched",
@@ -156,7 +156,7 @@
     ],
     "classification": "diverged",
     "dimension": "tool_order",
-    "provenance": "Deterministic local drift classification. Not a live provider capture.",
+    "provenance": "Deterministic local drift classification. Not a live provider capture. [REDACTED:bearer_token]",
     "target_events": [
       {
         "index": 0,
@@ -371,18 +371,40 @@
       "role": "assistant"
     }
   ],
-  "fingerprint": "fa338018e60c577a5bcd46720a0776def07b1c48e5c86708f7bd6fd2bf46c6bd",
+  "fingerprint": "96ba827bcc5717f0c784803a57db3ecaf03e4c2ace44324f10fd9c6e799b44f6",
   "id": "7390cec8b7a3c6af2cc1e019ae3d62d2ac8115c18451dc1f22669247c65c9fd2",
+  "integrity_hash": "4a58107e5c2a0573c66ae09bbad8fb913466b8c6ba2cac6818accfc8ee129d4f",
   "latency_ms": 184,
   "model": "gpt-4.1-mini",
   "provenance": "Deterministic local Ferric demo fixture. Not provider or Kiro production traffic.",
   "provider": "openai",
   "recorded_at": "2026-08-17T12:00:00Z",
-  "redactions": [],
+  "redactions": [
+    {
+      "event_index": -1,
+      "field_path": "$.assertions[0].pattern",
+      "rule_class": "api_key"
+    },
+    {
+      "event_index": -1,
+      "field_path": "$.assertions[2].expected",
+      "rule_class": "card"
+    },
+    {
+      "event_index": -1,
+      "field_path": "$.drift.provenance",
+      "rule_class": "bearer_token"
+    },
+    {
+      "event_index": -1,
+      "field_path": "$.replay.provenance",
+      "rule_class": "email"
+    }
+  ],
   "replay": {
     "duration_ms": 7,
     "network_calls": 0,
-    "provenance": "Deterministic local replay duration for reproducible evidence. No provider transport was constructed.",
+    "provenance": "Deterministic local replay duration for reproducible evidence. No provider transport was constructed. [REDACTED:email]",
     "tokens": 0
   },
   "request": {

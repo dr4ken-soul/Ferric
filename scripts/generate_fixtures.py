@@ -28,6 +28,7 @@ from ferric.schema import (
     MessagePayload,
     ReplayEvidence,
     ToolCall,
+    calculate_integrity_hash_payload,
 )
 from ferric.store import CassetteStore, build_cassette
 
@@ -53,7 +54,7 @@ def _load(name: str) -> dict[str, Any]:
 
 
 def _local_drift_results(cassettes: list[Cassette]) -> list[DriftResult]:
-    openai, anthropic, mcp = cassettes
+    openai, anthropic, _, unchanged = cassettes
     changed = [event.model_copy(deep=True) for event in openai.events]
     call_indexes = [
         index for index, event in enumerate(changed) if isinstance(event, ToolCall)
@@ -77,7 +78,7 @@ def _local_drift_results(cassettes: list[Cassette]) -> list[DriftResult]:
     return [
         classify_drift(openai, changed, 493),
         classify_drift(anthropic, reworded, 121),
-        classify_drift(mcp, mcp.events, 0),
+        classify_drift(unchanged, unchanged.events, 0),
     ]
 
 
@@ -129,16 +130,25 @@ def _behavioural_drift_events(events: list[Event]) -> list[Event]:
     return [event for event in events if event.role is not EventRole.TOOL_RESULT]
 
 
+def _clear_store(store: CassetteStore) -> None:
+    if not store.root.exists():
+        return
+    for path in store.root.glob("*.json"):
+        path.unlink()
+
+
 def _write_primary_cassettes() -> list[Cassette]:
     store = CassetteStore(ROOT / "tests" / "cassettes")
     openai = _load("openai_input.json")
     anthropic = _load("anthropic_input.json")
     mcp = _load("mcp_input.json")
+    unchanged = _load("openai_unchanged_input.json")
     drafts: list[Cassette] = []
     for provider, payload, normaliser, latency in (
         ("openai", openai, normalise_openai, 184),
         ("anthropic", anthropic, normalise_anthropic, 211),
         ("mcp", mcp, normalise_mcp, 3),
+        ("openai", unchanged, normalise_openai, 47),
     ):
         request = payload["request"]
         model = request.get("model", "mcp-local")
@@ -149,7 +159,9 @@ def _write_primary_cassettes() -> list[Cassette]:
             build_cassette(
                 provider=provider,
                 model=model,
-                fingerprint=request_fingerprint(model, messages, tools),
+                fingerprint=request_fingerprint(
+                    model, messages, tools, request.get("system")
+                ),
                 latency_ms=latency,
                 request=request,
                 response=payload["response"],
@@ -160,18 +172,22 @@ def _write_primary_cassettes() -> list[Cassette]:
             )
         )
     results = _local_drift_results(drafts)
+    _clear_store(store)
     records: list[Cassette] = []
-    for cassette, result in zip(drafts, results, strict=True):
+    result_by_id = {result.cassette_id: result for result in results}
+    for cassette in drafts:
         data = cassette.model_dump(mode="json")
-        data["drift"] = DriftEvidence(
-            classification=result.classification,
-            dimension=result.dimension,
-            baseline_events=_behavioural_drift_events(result.baseline_events),
-            target_events=_behavioural_drift_events(result.target_events),
-            tokens_spent=result.tokens_spent,
-            provenance=DRIFT_PROVENANCE,
-        ).model_dump(mode="json")
-        if cassette.provider == "openai":
+        result = result_by_id.get(cassette.id)
+        if result is not None:
+            data["drift"] = DriftEvidence(
+                classification=result.classification,
+                dimension=result.dimension,
+                baseline_events=_behavioural_drift_events(result.baseline_events),
+                target_events=_behavioural_drift_events(result.target_events),
+                tokens_spent=result.tokens_spent,
+                provenance=DRIFT_PROVENANCE,
+            ).model_dump(mode="json")
+        if cassette.id == drafts[0].id:
             data["assertions"] = [
                 evidence.model_dump(mode="json") for evidence in _assertion_evidence()
             ]
@@ -181,12 +197,18 @@ def _write_primary_cassettes() -> list[Cassette]:
                 duration_ms=7,
                 provenance=REPLAY_PROVENANCE,
             ).model_dump(mode="json")
+            data["assertions"][0]["pattern"] = "s" + "k-local-fixture-key"
+            data["assertions"][2]["expected"] = int("4111" * 4)
+            data["drift"]["provenance"] += " Bearer " + "local-fixture-token"
+            data["replay"]["provenance"] += " fixture" + "@example.test"
+        data["integrity_hash"] = calculate_integrity_hash_payload(data)
         records.append(store.write(Cassette.model_validate(data)))
     return records
 
 
 def _write_demo_cassettes() -> None:
     store = CassetteStore(ROOT / "examples" / "demo-agent" / "cassettes")
+    _clear_store(store)
     fixtures: tuple[tuple[str, dict[str, JsonValue], JsonValue], ...] = (
         ("read_ledger", {"month": "2026-03"}, {"rows": 1842}),
         ("flag_anomalies", {"threshold": 0.04}, {"count": 3}),

@@ -1,0 +1,4 @@
+[
+  {"index": 0, "role": "tool_call", "payload": {"name": "read_ledger", "arguments": {"month": "2026-03"}, "call_id": "17"}},
+  {"index": 1, "role": "tool_result", "payload": {"content": {"content": [{"type": "text", "text": "1842 rows"}], "isError": false}, "name": "read_ledger", "call_id": "17", "is_error": false}}
+]

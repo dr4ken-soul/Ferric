@@ -8,7 +8,7 @@ from ferric.assertions import (
     assert_tool_arguments,
     assert_tool_sequence,
 )
-from ferric.wrapper import FerricClient, wrap
+from ferric.wrapper import FerricClient, replay_client, wrap
 
 __all__ = [
     "FerricAssertionError",
@@ -18,5 +18,6 @@ __all__ = [
     "assert_response_schema",
     "assert_tool_arguments",
     "assert_tool_sequence",
+    "replay_client",
     "wrap",
 ]

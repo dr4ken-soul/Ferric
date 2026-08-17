@@ -145,8 +145,9 @@
       "role": "assistant"
     }
   ],
-  "fingerprint": "e3b83ae03979a51546ab300ff86e07ae34ee2da4f452d167591301ddc77b7b7f",
+  "fingerprint": "589452535cf73ff3eda775e277fe8ee7646ddd7201f98784f0c439d09a1338cf",
   "id": "c6d2362744e16413e9109295bb45e90ed5d2c69ec7ba0b1d1568c78305d40601",
+  "integrity_hash": "5028a933db6634c03b2d5357ce477d5b2be4952f09744cd897b0cf60e73adbe3",
   "latency_ms": 211,
   "model": "claude-3-5-haiku-latest",
   "provenance": "Deterministic local Ferric demo fixture. Not provider or Kiro production traffic.",

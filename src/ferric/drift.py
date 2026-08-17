@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Literal
 
 from ferric.adapters.anthropic import create_anthropic_client, normalise_anthropic
 from ferric.adapters.openai import create_openai_client, normalise_openai
@@ -12,6 +12,8 @@ from ferric.schema import (
     DriftClassification,
     DriftDimension,
     DriftResult,
+    DriftRun,
+    DriftSkipped,
     Event,
     EventRole,
 )
@@ -37,14 +39,33 @@ def _assistant_shape(events: list[Event]) -> list[tuple[str, bool]]:
     ]
 
 
-def _is_json_assistant(value: Any) -> bool:
-    if not isinstance(value, str):
-        return isinstance(value, (dict, list))
-    try:
-        json.loads(value)
-    except json.JSONDecodeError:
-        return False
-    return True
+def _json_value(value: Any) -> Any:
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped.startswith(("{", "[")):
+            return value
+        try:
+            return json.loads(stripped)
+        except json.JSONDecodeError:
+            return value
+    return value
+
+
+def _json_shape(value: Any) -> Any:
+    value = _json_value(value)
+    if isinstance(value, dict):
+        return {key: _json_shape(child) for key, child in sorted(value.items())}
+    if isinstance(value, list):
+        return [_json_shape(child) for child in value]
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, int):
+        return "integer"
+    if isinstance(value, float):
+        return "number"
+    if value is None:
+        return "null"
+    return "string"
 
 
 def _schema_dimension(baseline: list[Event], target: list[Event]) -> bool:
@@ -54,9 +75,12 @@ def _schema_dimension(baseline: list[Event], target: list[Event]) -> bool:
     target_values = [
         event.payload.content for event in target if event.role is EventRole.ASSISTANT
     ]
-    return bool(baseline_values and target_values) and any(
-        _is_json_assistant(value) != _is_json_assistant(other)
-        for value, other in zip(baseline_values, target_values, strict=False)
+    return bool(baseline_values and target_values) and (
+        len(baseline_values) != len(target_values)
+        or any(
+            _json_shape(value) != _json_shape(other)
+            for value, other in zip(baseline_values, target_values, strict=False)
+        )
     )
 
 
@@ -125,40 +149,151 @@ def _token_count(response: Any) -> int:
     return 0
 
 
-def _live_call(cassette: Cassette, target_model: str) -> tuple[list[Event], int]:
-    request = dict(cassette.request)
+def infer_target_provider(target_model: str) -> Literal["openai", "anthropic"]:
+    """Infer a supported target provider from a model identifier."""
+
+    lowered = target_model.casefold()
+    return "anthropic" if "claude" in lowered else "openai"
+
+
+def _target_request(
+    cassette: Cassette,
+    target_model: str,
+    target_provider: Literal["openai", "anthropic"],
+) -> dict[str, Any]:
+    request: dict[str, Any] = dict(cassette.request)
+    request.pop("_positional_args", None)
     request["model"] = target_model
-    if cassette.provider == "openai":
-        client = create_openai_client()
+    if cassette.provider == target_provider:
+        return request
+    messages = request.get("messages", [])
+    if target_provider == "openai":
+        system = request.pop("system", None)
+        converted: list[dict[str, Any]] = []
+        if system is not None:
+            converted.append({"role": "system", "content": system})
+        for message in messages if isinstance(messages, list) else []:
+            if not isinstance(message, dict):
+                continue
+            content = message.get("content")
+            if isinstance(content, list):
+                text = "\n".join(
+                    str(block.get("text"))
+                    for block in content
+                    if isinstance(block, dict) and block.get("type") == "text"
+                )
+                content = text
+            converted.append({"role": message.get("role", "user"), "content": content})
+        request["messages"] = converted
+        request.pop("max_tokens", None)
+        tools = request.get("tools")
+        if isinstance(tools, list):
+            request["tools"] = [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool.get("name"),
+                        "description": tool.get("description", ""),
+                        "parameters": tool.get("input_schema", {}),
+                    },
+                }
+                for tool in tools
+                if isinstance(tool, dict) and "name" in tool
+            ]
+    else:
+        converted = []
+        system_parts: list[Any] = []
+        for message in messages if isinstance(messages, list) else []:
+            if not isinstance(message, dict):
+                continue
+            role = message.get("role", "user")
+            if role == "system":
+                system_parts.append(message.get("content"))
+            elif role in {"user", "assistant"}:
+                converted.append({"role": role, "content": message.get("content")})
+        if system_parts:
+            request["system"] = "\n".join(str(part) for part in system_parts)
+        request["messages"] = converted
+        request.setdefault("max_tokens", 1024)
+        tools = request.get("tools")
+        if isinstance(tools, list):
+            request["tools"] = [
+                {
+                    "name": function.get("name"),
+                    "description": function.get("description", ""),
+                    "input_schema": function.get("parameters", {}),
+                }
+                for tool in tools
+                if isinstance(tool, dict)
+                and isinstance((function := tool.get("function")), dict)
+            ]
+    return request
+
+
+def _live_call(
+    cassette: Cassette,
+    target_model: str,
+    target_provider: Literal["openai", "anthropic"],
+    client: Any | None = None,
+) -> tuple[list[Event], int]:
+    request = _target_request(cassette, target_model, target_provider)
+    if target_provider == "openai":
         try:
-            response = client.chat.completions.create(**request)
+            target_client = client if client is not None else create_openai_client()
+        except ImportError as error:
+            raise DriftProviderError(
+                "OpenAI drift requires the 'openai' extra"
+            ) from error
+        try:
+            response = target_client.chat.completions.create(**request)
         except BaseException as error:
             raise DriftProviderError(
                 f"{cassette.id}: target provider call failed"
             ) from error
         return normalise_openai(request, response), _token_count(response)
-    if cassette.provider == "anthropic":
-        client = create_anthropic_client()
+    if target_provider == "anthropic":
         try:
-            response = client.messages.create(**request)
+            target_client = client if client is not None else create_anthropic_client()
+        except ImportError as error:
+            raise DriftProviderError(
+                "Anthropic drift requires the 'anthropic' extra"
+            ) from error
+        try:
+            response = target_client.messages.create(**request)
         except BaseException as error:
             raise DriftProviderError(
                 f"{cassette.id}: target provider call failed"
             ) from error
         return normalise_anthropic(request, response), _token_count(response)
-    raise DriftProviderError(
-        f"{cassette.id}: MCP fixtures require a target MCP server and are not model drift inputs"
-    )
+    raise DriftProviderError(f"unsupported target provider {target_provider!r}")
 
 
-def run_drift(store: CassetteStore, target_model: str) -> list[DriftResult]:
-    """Call the selected live provider for every supported cassette."""
+def run_drift(
+    store: CassetteStore,
+    target_model: str,
+    *,
+    target_provider: Literal["openai", "anthropic"] | None = None,
+    client: Any | None = None,
+) -> DriftRun:
+    """Call one target provider and skip unsupported MCP baselines honestly."""
 
+    selected = target_provider or infer_target_provider(target_model)
     results: list[DriftResult] = []
+    skipped: list[DriftSkipped] = []
     for cassette in store.verify():
         if cassette.provider == "mcp":
-            results.append(classify_drift(cassette, cassette.events, 0))
+            skipped.append(
+                DriftSkipped(
+                    cassette_id=cassette.id,
+                    reason="MCP tool exchange cannot be submitted to a model provider",
+                )
+            )
             continue
-        target_events, tokens = _live_call(cassette, target_model)
+        target_events, tokens = _live_call(cassette, target_model, selected, client)
         results.append(classify_drift(cassette, target_events, tokens))
-    return results
+    return DriftRun(
+        target_provider=selected,
+        target_model=target_model,
+        results=results,
+        skipped=skipped,
+    )

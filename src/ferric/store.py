@@ -23,11 +23,24 @@ from ferric.schema import (
     RedactionRecord,
     ReplayEvidence,
     calculate_content_id,
+    calculate_integrity_hash_payload,
 )
 
 
 class CassetteStoreError(RuntimeError):
     """Report a corrupt or inconsistent cassette store."""
+
+
+def _validation_locations(error: ValidationError) -> str:
+    locations: list[str] = []
+    for item in error.errors():
+        location = ".".join(str(part) for part in item["loc"])
+        if not location and "integrity hash" in item["msg"]:
+            location = "integrity_hash"
+        elif not location and "identifier" in item["msg"]:
+            location = "id"
+        locations.append(location or "$")
+    return ", ".join(locations)
 
 
 def default_cassette_dir() -> Path:
@@ -63,26 +76,26 @@ def build_cassette(
 ) -> Cassette:
     """Construct a validated cassette from normalised interaction data."""
 
-    return Cassette.model_validate(
-        {
-            "id": content_hash(events),
-            "provider": provider,
-            "model": model,
-            "recorded_at": recorded_at or datetime.now(UTC),
-            "fingerprint": fingerprint,
-            "latency_ms": latency_ms,
-            "request": request,
-            "response": response,
-            "response_kind": response_kind,
-            "response_json": response_json,
-            "events": [event.model_dump(mode="json") for event in events],
-            "redactions": redactions or [],
-            "provenance": provenance,
-            "assertions": assertions or [],
-            "drift": drift,
-            "replay": replay,
-        }
-    )
+    data: dict[str, Any] = {
+        "id": content_hash(events),
+        "provider": provider,
+        "model": model,
+        "recorded_at": recorded_at or datetime.now(UTC),
+        "fingerprint": fingerprint,
+        "latency_ms": latency_ms,
+        "request": request,
+        "response": response,
+        "response_kind": response_kind,
+        "response_json": response_json,
+        "events": [event.model_dump(mode="json") for event in events],
+        "redactions": redactions or [],
+        "provenance": provenance,
+        "assertions": assertions or [],
+        "drift": drift,
+        "replay": replay,
+    }
+    data["integrity_hash"] = calculate_integrity_hash_payload(data)
+    return Cassette.model_validate(data)
 
 
 class CassetteStore:
@@ -105,9 +118,18 @@ class CassetteStore:
         safe_cassette = self.redactor.redact_cassette(cassette)
         self.root.mkdir(parents=True, exist_ok=True)
         path = self.root / f"{safe_cassette.id}.json"
-        self._atomic_json(path, safe_cassette.model_dump(mode="json"))
-        manifest = self._manifest_from_disk()
-        self._atomic_json(self.manifest_path, manifest.model_dump(mode="json"))
+        previous_cassette = path.read_bytes() if path.exists() else None
+        previous_manifest = (
+            self.manifest_path.read_bytes() if self.manifest_path.exists() else None
+        )
+        try:
+            self._atomic_json(path, safe_cassette.model_dump(mode="json"))
+            manifest = self._manifest_from_disk()
+            self._atomic_json(self.manifest_path, manifest.model_dump(mode="json"))
+        except BaseException:
+            self._restore(path, previous_cassette)
+            self._restore(self.manifest_path, previous_manifest)
+            raise
         return safe_cassette
 
     def read(self, cassette_id: str) -> Cassette:
@@ -148,13 +170,19 @@ class CassetteStore:
         """Validate schema, identifiers, manifest and redaction for the store."""
 
         cassettes = self.list()
+        if not cassettes:
+            raise CassetteStoreError("cassette library is empty")
+        unsafe: list[str] = []
         for cassette in cassettes:
             findings = self.redactor.find_sensitive(cassette.model_dump(mode="json"))
-            if findings:
-                path, rule_class = findings[0]
-                raise CassetteStoreError(
-                    f"{cassette.id}.json:{path}: unredacted {rule_class} value"
-                )
+            unsafe.extend(
+                f"{cassette.id}.json:{path}: unredacted {rule_class} value"
+                for path, rule_class in findings
+            )
+        if unsafe:
+            raise CassetteStoreError(
+                "redaction verification failed:\n" + "\n".join(unsafe)
+            )
         return cassettes
 
     def _cassette_paths(self) -> builtins.list[Path]:
@@ -170,7 +198,12 @@ class CassetteStore:
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             return Cassette.model_validate(data)
-        except (OSError, UnicodeError, json.JSONDecodeError, ValidationError) as error:
+        except ValidationError as error:
+            locations = _validation_locations(error)
+            raise CassetteStoreError(
+                f"{path}: invalid cassette at {locations}"
+            ) from error
+        except (OSError, UnicodeError, json.JSONDecodeError) as error:
             raise CassetteStoreError(
                 f"{path}: invalid cassette: {type(error).__name__}"
             ) from error
@@ -179,7 +212,12 @@ class CassetteStore:
         try:
             data = json.loads(self.manifest_path.read_text(encoding="utf-8"))
             return Manifest.model_validate(data)
-        except (OSError, UnicodeError, json.JSONDecodeError, ValidationError) as error:
+        except ValidationError as error:
+            locations = _validation_locations(error)
+            raise CassetteStoreError(
+                f"{self.manifest_path}: invalid manifest at {locations}"
+            ) from error
+        except (OSError, UnicodeError, json.JSONDecodeError) as error:
             raise CassetteStoreError(
                 f"{self.manifest_path}: invalid manifest: {type(error).__name__}"
             ) from error
@@ -215,6 +253,32 @@ class CassetteStore:
             with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
                 json.dump(data, handle, ensure_ascii=True, indent=2, sort_keys=True)
                 handle.write("\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary_name, path)
+        except BaseException:
+            try:
+                os.unlink(temporary_name)
+            except FileNotFoundError:
+                pass
+            raise
+
+    @staticmethod
+    def _restore(path: Path, content: bytes | None) -> None:
+        if content is None:
+            try:
+                path.unlink()
+            except FileNotFoundError:
+                pass
+            return
+        descriptor, temporary_name = tempfile.mkstemp(
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".restore",
+        )
+        try:
+            with os.fdopen(descriptor, "wb") as handle:
+                handle.write(content)
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(temporary_name, path)

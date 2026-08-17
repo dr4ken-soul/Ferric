@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import runpy
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,7 @@ from ferric.schema import (
     DriftDimension,
     DriftEvidence,
     ReplayEvidence,
+    calculate_integrity_hash_payload,
 )
 from ferric.store import CassetteStore
 
@@ -45,6 +47,7 @@ def test_evidence_does_not_change_content_identifier(sample_cassette: Cassette) 
         duration_ms=7,
         provenance="Deterministic local timing.",
     ).model_dump(mode="json")
+    data["integrity_hash"] = calculate_integrity_hash_payload(data)
     evidenced = Cassette.model_validate(data)
     assert evidenced.id == sample_cassette.id
 
@@ -61,6 +64,7 @@ def test_store_redacts_sensitive_evidence_before_disk(
             location="$.request.messages[0]",
         ).model_dump(mode="json")
     ]
+    data["integrity_hash"] = calculate_integrity_hash_payload(data)
     cassette = Cassette.model_validate(data)
     written = CassetteStore(tmp_path).write(cassette)
     raw = (tmp_path / f"{written.id}.json").read_text(encoding="utf-8")
@@ -109,6 +113,9 @@ def test_fixture_evidence_is_valid_and_safely_provenanced(cassette_dir: Path) ->
         DriftClassification.DIVERGED,
     }
     for cassette in cassettes:
+        if cassette.provider == "mcp":
+            assert cassette.drift is None
+            continue
         assert cassette.drift is not None
         assert "Deterministic local drift classification" in cassette.drift.provenance
         assert "Not a live provider capture" in cassette.drift.provenance
@@ -121,6 +128,10 @@ def test_fixture_evidence_is_valid_and_safely_provenanced(cassette_dir: Path) ->
         )
         == []
     )
+    assert {
+        record.rule_class for cassette in cassettes for record in cassette.redactions
+    } >= {"api_key", "bearer_token", "email", "card"}
+    assert all(len(cassette.integrity_hash) == 64 for cassette in cassettes)
 
 
 def test_fixture_contains_evidenced_tool_order_divergence(cassette_dir: Path) -> None:
@@ -185,18 +196,20 @@ def test_fixture_replay_evidence_proves_local_zero_network(cassette_dir: Path) -
 
 def test_fixture_shape_populates_site_generator_without_writing_web() -> None:
     root = Path(__file__).parents[1]
-    namespace = runpy.run_path(str(root / "scripts" / "build_site_data.py"))
+    sys.path.insert(0, str(root / "scripts"))
+    try:
+        namespace = runpy.run_path(str(root / "scripts" / "build_site_data.py"))
+    finally:
+        sys.path.pop(0)
     read_cassettes = namespace["read_cassettes"]
     build_site_data = namespace["build_site_data"]
     assert callable(read_cassettes)
     assert callable(build_site_data)
     data = build_site_data(read_cassettes())
-    assert data["replay"] == {
-        "available": True,
-        "networkCalls": 0,
-        "tokens": 0,
-        "durationMs": 7,
-    }
+    assert data["replay"]["available"] is True
+    assert data["replay"]["networkCalls"] == 0
+    assert data["replay"]["tokens"] == 0
+    assert data["replay"]["durationMs"] == 7
     assert {row["classification"] for row in data["drift"]["rows"]} == {
         "unchanged",
         "reworded",

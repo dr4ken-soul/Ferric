@@ -9,8 +9,8 @@ from typing import Any
 from ferric.schema import Cassette
 from ferric.store import CassetteStore
 
-_VOLATILE_KEYS = frozenset(
-    {"created", "created_at", "id", "request_id", "timestamp", "trace_id"}
+_TOP_LEVEL_VOLATILE_KEYS = frozenset(
+    {"created", "created_at", "request_id", "timestamp", "trace_id"}
 )
 
 
@@ -18,14 +18,14 @@ class UnmatchedRequestError(LookupError):
     """Report an exact replay miss and its nearest diagnostic neighbour."""
 
 
-def normalise_request_value(value: Any) -> Any:
-    """Remove volatile keys and return stable JSON-compatible request data."""
+def normalise_request_value(value: Any, *, top_level: bool = False) -> Any:
+    """Return stable JSON data, removing only top-level transport metadata."""
 
     if isinstance(value, dict):
         return {
             str(key): normalise_request_value(child)
             for key, child in sorted(value.items(), key=lambda item: str(item[0]))
-            if str(key).casefold() not in _VOLATILE_KEYS
+            if not (top_level and str(key).casefold() in _TOP_LEVEL_VOLATILE_KEYS)
         }
     if isinstance(value, (list, tuple)):
         return [normalise_request_value(child) for child in value]
@@ -40,13 +40,15 @@ def request_fingerprint(
     model: str,
     messages: Any,
     tools: Any = None,
+    system: Any = None,
 ) -> str:
-    """Hash the model, normalised messages and tools in scope."""
+    """Hash the model, system content, messages and tools in scope."""
 
     canonical = json.dumps(
         {
             "messages": normalise_request_value(messages),
             "model": model,
+            "system": normalise_request_value(system),
             "tools": normalise_request_value(tools or []),
         },
         ensure_ascii=True,
@@ -71,6 +73,8 @@ def match_cassette(store: CassetteStore, fingerprint: str) -> Cassette:
     """Return an exact match or raise with the nearest cassette diagnostic."""
 
     cassettes = store.list()
+    if cassettes:
+        cassettes = store.verify()
     for cassette in cassettes:
         if cassette.fingerprint == fingerprint:
             return cassette

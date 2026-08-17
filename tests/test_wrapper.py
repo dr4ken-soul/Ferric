@@ -8,8 +8,9 @@ from typing import Any
 import pytest
 
 from ferric.matcher import UnmatchedRequestError
-from ferric.store import CassetteStore
-from ferric.wrapper import RecordedProviderError, wrap
+from ferric.redact import RedactionRule
+from ferric.store import CassetteStore, CassetteStoreError
+from ferric.wrapper import RecordedProviderError, replay_client, wrap
 
 
 class FakeResponse:
@@ -47,6 +48,12 @@ class OpenAIClient:
 class AnthropicClient:
     def __init__(self, endpoint: Endpoint) -> None:
         self.messages = endpoint
+
+
+class NestedProviderSpy:
+    @property
+    def with_raw_response(self) -> Any:
+        raise AssertionError("nested provider endpoint was accessed")
 
 
 OPENAI_REQUEST = {
@@ -103,6 +110,125 @@ def test_replay_never_calls_provider_or_socket(
     observed = replay.chat.completions.create(**OPENAI_REQUEST)
     assert observed.choices[0].message.content.encode("utf-8") == b"local reply"
     assert endpoint.calls == []
+
+
+def test_nested_openai_raw_response_replay_never_touches_provider(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    response = FakeResponse(OPENAI_RESPONSE)
+    recorder = wrap(
+        OpenAIClient(Endpoint(response)), cassette_dir=tmp_path, mode="record"
+    )
+    recorder.chat.completions.create(**OPENAI_REQUEST)
+
+    def fail_socket(*_: Any, **__: Any) -> None:
+        raise AssertionError("a socket was opened")
+
+    monkeypatch.setattr("socket.socket", fail_socket)
+    client = OpenAIClient(NestedProviderSpy())
+    replay = wrap(client, cassette_dir=tmp_path, mode="replay")
+    observed = replay.chat.completions.with_raw_response.create(**OPENAI_REQUEST)
+    assert observed.choices[0].message.content == "local reply"
+
+
+def test_nested_anthropic_raw_response_replay_never_touches_provider(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    request = {
+        "model": "local-anthropic",
+        "max_tokens": 32,
+        "messages": [{"role": "user", "content": "local request"}],
+    }
+    payload = {
+        "id": "local-message",
+        "content": [{"type": "text", "text": "local Anthropic reply"}],
+    }
+    wrap(
+        AnthropicClient(Endpoint(FakeResponse(payload))),
+        cassette_dir=tmp_path,
+        mode="record",
+    ).messages.create(**request)
+
+    def fail_socket(*_: Any, **__: Any) -> None:
+        raise AssertionError("a socket was opened")
+
+    monkeypatch.setattr("socket.socket", fail_socket)
+    replay = wrap(
+        AnthropicClient(NestedProviderSpy()), cassette_dir=tmp_path, mode="replay"
+    )
+    observed = replay.messages.with_raw_response.create(**request)
+    assert observed.content[0].text == "local Anthropic reply"
+
+
+def test_keyless_replay_client_needs_no_sdk_key_or_transport(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    response = FakeResponse(OPENAI_RESPONSE)
+    wrap(
+        OpenAIClient(Endpoint(response)), cassette_dir=tmp_path, mode="record"
+    ).chat.completions.create(**OPENAI_REQUEST)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    def fail_socket(*_: Any, **__: Any) -> None:
+        raise AssertionError("a socket was opened")
+
+    monkeypatch.setattr("socket.socket", fail_socket)
+    replay = replay_client("openai", cassette_dir=tmp_path)
+    observed = replay.chat.completions.with_streaming_response.create(**OPENAI_REQUEST)
+    assert observed.choices[0].message.content == "local reply"
+
+
+def test_keyless_anthropic_replay_client_needs_no_transport(tmp_path: Path) -> None:
+    request = {
+        "model": "local-anthropic",
+        "max_tokens": 32,
+        "messages": [{"role": "user", "content": "local request"}],
+    }
+    payload = {"content": [{"type": "text", "text": "local reply"}]}
+    wrap(
+        AnthropicClient(Endpoint(FakeResponse(payload))),
+        cassette_dir=tmp_path,
+        mode="record",
+    ).messages.create(**request)
+    observed = replay_client("anthropic", cassette_dir=tmp_path).messages.create(
+        **request
+    )
+    assert observed.content[0].text == "local reply"
+
+
+def test_wrap_exposes_custom_redaction_rules(tmp_path: Path) -> None:
+    request = {
+        **OPENAI_REQUEST,
+        "messages": [{"role": "user", "content": "tenant-private-42"}],
+    }
+    rule = RedactionRule.from_pattern("tenant", r"tenant-private-\d+")
+    wrap(
+        OpenAIClient(Endpoint(FakeResponse(OPENAI_RESPONSE))),
+        cassette_dir=tmp_path,
+        mode="record",
+        custom_rules=(rule,),
+    ).chat.completions.create(**request)
+    raw = next(
+        path for path in tmp_path.glob("*.json") if path.name != "manifest.json"
+    ).read_text(encoding="utf-8")
+    assert "tenant-private-42" not in raw
+    assert "[REDACTED:tenant]" in raw
+
+
+def test_keyless_replay_applies_custom_verification_rules(tmp_path: Path) -> None:
+    request = {
+        **OPENAI_REQUEST,
+        "messages": [{"role": "user", "content": "tenant-private-42"}],
+    }
+    wrap(
+        OpenAIClient(Endpoint(FakeResponse(OPENAI_RESPONSE))),
+        cassette_dir=tmp_path,
+        mode="record",
+    ).chat.completions.create(**request)
+    rule = RedactionRule.from_pattern("tenant", r"tenant-private-\d+")
+    replay = replay_client("openai", cassette_dir=tmp_path, custom_rules=(rule,))
+    with pytest.raises(CassetteStoreError, match="unredacted tenant"):
+        replay.chat.completions.create(**request)
 
 
 def test_replay_reconstructs_exact_response_json(tmp_path: Path) -> None:

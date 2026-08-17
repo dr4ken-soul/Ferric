@@ -12,6 +12,7 @@ from typing import Any, Literal, cast
 from ferric.adapters.anthropic import normalise_anthropic
 from ferric.adapters.openai import normalise_openai
 from ferric.matcher import match_cassette, request_fingerprint
+from ferric.redact import RedactionRule
 from ferric.schema import ErrorEvent, Event
 from ferric.store import CassetteStore, build_cassette
 
@@ -120,7 +121,12 @@ def _detect_provider(client: Any) -> Provider:
 
 
 class _EndpointProxy:
-    def __init__(self, owner: FerricClient, endpoint: Any, provider: Provider) -> None:
+    def __init__(
+        self,
+        owner: FerricClient,
+        endpoint: Any | None,
+        provider: Provider,
+    ) -> None:
         self._owner = owner
         self._endpoint = endpoint
         self._provider = provider
@@ -129,7 +135,12 @@ class _EndpointProxy:
         return self._owner._create(self._endpoint, self._provider, args, kwargs)
 
     def __getattr__(self, name: str) -> Any:
-        return getattr(self._endpoint, name)
+        if self._owner._mode == "replay" or self._endpoint is None:
+            return _EndpointProxy(self._owner, None, self._provider)
+        value = getattr(self._endpoint, name)
+        if hasattr(value, "create"):
+            return _EndpointProxy(self._owner, value, self._provider)
+        return value
 
 
 class _NamespaceProxy:
@@ -143,7 +154,7 @@ class FerricClient:
 
     def __init__(
         self,
-        client: Any,
+        client: Any | None,
         *,
         mode: str,
         store: CassetteStore,
@@ -153,21 +164,26 @@ class FerricClient:
 
         if mode not in {"", "record", "replay"}:
             raise ValueError("FERRIC_MODE must be record, replay, or unset")
+        if provider not in {"openai", "anthropic"}:
+            raise ValueError("provider must be openai or anthropic")
         self._client = client
         self._mode = mode
         self._store = store
         self._provider = provider
         if provider == "openai":
-            endpoint = client.chat.completions
+            endpoint = None if client is None else client.chat.completions
             self.chat = _NamespaceProxy(
                 completions=_EndpointProxy(self, endpoint, provider)
             )
         else:
-            self.messages = _EndpointProxy(self, client.messages, provider)
+            endpoint = None if client is None else client.messages
+            self.messages = _EndpointProxy(self, endpoint, provider)
 
     def __getattr__(self, name: str) -> Any:
         """Delegate all unsupported attributes to the original client."""
 
+        if self._client is None:
+            raise AttributeError(name)
         return getattr(self._client, name)
 
     def _create(
@@ -178,6 +194,8 @@ class FerricClient:
         kwargs: dict[str, Any],
     ) -> Any:
         if self._mode == "":
+            if endpoint is None:
+                raise RuntimeError("passthrough requires a provider client")
             return endpoint.create(*args, **kwargs)
         request = dict(kwargs)
         if args:
@@ -187,6 +205,7 @@ class FerricClient:
             model,
             request.get("messages", []),
             request.get("tools", []),
+            request.get("system"),
         )
         if self._mode == "replay":
             cassette = match_cassette(self._store, fingerprint)
@@ -208,6 +227,8 @@ class FerricClient:
             normalise_openai if provider == "openai" else normalise_anthropic
         )
         started = time.perf_counter()
+        if endpoint is None:
+            raise RuntimeError("record mode requires a provider client")
         try:
             response = endpoint.create(*args, **kwargs)
         except BaseException as error:
@@ -249,6 +270,7 @@ def wrap(
     cassette_dir: str | os.PathLike[str] | None = None,
     provider: Provider | None = None,
     mode: str | None = None,
+    custom_rules: tuple[RedactionRule, ...] = (),
 ) -> FerricClient:
     """Wrap an OpenAI or Anthropic client using the selected Ferric mode."""
 
@@ -258,7 +280,27 @@ def wrap(
         client,
         mode=selected_mode.casefold(),
         store=CassetteStore(
-            os.fspath(cassette_dir) if cassette_dir is not None else None
+            os.fspath(cassette_dir) if cassette_dir is not None else None,
+            custom_rules,
         ),
         provider=selected_provider,
+    )
+
+
+def replay_client(
+    provider: Provider,
+    *,
+    cassette_dir: str | os.PathLike[str] | None = None,
+    custom_rules: tuple[RedactionRule, ...] = (),
+) -> FerricClient:
+    """Create a keyless replay-only client without constructing a provider SDK."""
+
+    return FerricClient(
+        None,
+        mode="replay",
+        store=CassetteStore(
+            os.fspath(cassette_dir) if cassette_dir is not None else None,
+            custom_rules,
+        ),
+        provider=provider,
     )

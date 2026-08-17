@@ -6,13 +6,14 @@ build-backend = "hatchling.build"
 name = "ferric"
 version = "0.1.0"
 description = "Offline recording and behavioural replay for LLM and agent traffic."
-readme = "CLAUDE.md"
+readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [{ name = "Ferric contributors" }]
 dependencies = [
   "pydantic>=2.7,<3",
   "typer>=0.12,<1",
+  "pytest>=8.2",
 ]
 
 [project.optional-dependencies]
@@ -50,6 +51,7 @@ ignore = ["D202", "D203", "D213", "E501"]
 "examples/demo-agent/**/*.py" = ["D103"]
 "scripts/check_offline.py" = ["I001", "UP035"]
 "scripts/check_redaction.py" = ["I001", "UP035"]
+"scripts/build_site_data.py" = ["I001"]
 
 [tool.mypy]
 python_version = "3.11"
