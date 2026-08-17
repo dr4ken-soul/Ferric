@@ -1,0 +1,17 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "cassette-redaction-gate",
+      "description": "Reject sensitive values from committed cassette JSON.",
+      "trigger": "PostFileSave",
+      "matcher": "^tests[\\\\/]cassettes[\\\\/].*\\.json$",
+      "action": {
+        "type": "command",
+        "command": "python scripts/check_redaction.py"
+      },
+      "timeout": 60,
+      "enabled": true
+    }
+  ]
+}

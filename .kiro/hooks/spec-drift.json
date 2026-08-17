@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "specification-drift-check",
+      "description": "Require implementation evidence before a Ferric task is marked complete.",
+      "trigger": "PostTaskExec",
+      "action": {
+        "type": "agent",
+        "prompt": "Compare the completed work with .kiro/specs/ferric-core/requirements.md, design.md and tasks.md. Name the acceptance criteria addressed and the tests or artefacts that prove them. Mark a task complete only when all of its mapped criteria have evidence. If implementation changed scope or behaviour, update the specification honestly before reporting completion. Do not claim deferred or untested work."
+      },
+      "enabled": true
+    }
+  ]
+}

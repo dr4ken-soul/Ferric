@@ -1,0 +1,17 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "adapter-golden-tests",
+      "description": "Rerun schema and adapter goldens when their contract or fixtures change.",
+      "trigger": "PostFileSave",
+      "matcher": "^(src[\\\\/]ferric[\\\\/]schema\\.py|src[\\\\/]ferric[\\\\/]adapters[\\\\/].*\\.py|tests[\\\\/]goldens[\\\\/].*\\.json)$",
+      "action": {
+        "type": "command",
+        "command": "python -m pytest tests -q -k \"schema or adapter or golden\""
+      },
+      "timeout": 120,
+      "enabled": true
+    }
+  ]
+}

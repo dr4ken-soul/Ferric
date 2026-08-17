@@ -1,0 +1,17 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "offline-guard",
+      "description": "Reject network and provider imports from the default Python test suite.",
+      "trigger": "PostFileSave",
+      "matcher": "^tests[\\\\/](?!drift[\\\\/]).*\\.py$",
+      "action": {
+        "type": "command",
+        "command": "python scripts/check_offline.py"
+      },
+      "timeout": 60,
+      "enabled": true
+    }
+  ]
+}
