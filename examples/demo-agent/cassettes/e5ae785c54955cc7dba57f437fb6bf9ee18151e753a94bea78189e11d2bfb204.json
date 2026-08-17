@@ -1,4 +1,6 @@
 {
+  "assertions": [],
+  "drift": null,
   "events": [
     {
       "index": 0,
@@ -32,6 +34,7 @@
   "provider": "mcp",
   "recorded_at": "2026-08-17T12:00:00Z",
   "redactions": [],
+  "replay": null,
   "request": {
     "id": "demo-2",
     "method": "flag_anomalies",

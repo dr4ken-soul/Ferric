@@ -14,11 +14,14 @@ from pydantic import JsonValue, ValidationError
 
 from ferric.redact import RedactionRule, Redactor
 from ferric.schema import (
+    AssertionEvidence,
     Cassette,
+    DriftEvidence,
     Event,
     Manifest,
     ManifestEntry,
     RedactionRecord,
+    ReplayEvidence,
     calculate_content_id,
 )
 
@@ -54,6 +57,9 @@ def build_cassette(
     recorded_at: datetime | None = None,
     redactions: list[RedactionRecord] | None = None,
     provenance: str | None = None,
+    assertions: list[AssertionEvidence] | None = None,
+    drift: DriftEvidence | None = None,
+    replay: ReplayEvidence | None = None,
 ) -> Cassette:
     """Construct a validated cassette from normalised interaction data."""
 
@@ -72,6 +78,9 @@ def build_cassette(
             "events": [event.model_dump(mode="json") for event in events],
             "redactions": redactions or [],
             "provenance": provenance,
+            "assertions": assertions or [],
+            "drift": drift,
+            "replay": replay,
         }
     )
 
