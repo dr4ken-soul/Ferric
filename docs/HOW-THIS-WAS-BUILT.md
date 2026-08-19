@@ -41,11 +41,17 @@ The committed sample report was generated from three local drift fixtures by [`s
 | `60b9eda` | Python package, adapters, wrapper, matcher, store, assertions, CLI, drift classifier, report generator, tests and deterministic fixtures | Added the main implementation evidence for Requirements 1 to 5 and the local part of Requirement 6, chiefly Tasks 2 to 14 |
 | `a8dd624` | Validated assertion, replay and drift evidence models plus evidence tests and regenerated cassettes | Made local provenance and displayed evidence machine-validated for Tasks 12, 14 and 15 |
 | `bf914d8` | Store construction preserves provenance, assertions, drift and replay metadata | Fixed the write boundary so Requirement 6 evidence survives cassette construction |
-| `6774678` | Hermetic replay hardening, numeric and key redaction, integrity hashes, standard MCP JSON-RPC, keyless replay and drift tests | Closed review findings across Requirements 2 to 5 and expanded the verification suite to 112 tests |
+| `6774678` | Hermetic replay hardening, numeric and key redaction, integrity hashes, standard MCP JSON-RPC, keyless replay and drift tests | Closed review findings across Requirements 2 to 5 and expanded the verification suite |
 | `bb143bd` | Cassette-derived landing page, docs route, report evidence view, static-host routing and frontend checks | Added the web implementation for Requirements 4 and 6 |
 | `6b405e9` | Excluded generated web dependencies from Git | Kept the public repository source-only and reproducible with `npm ci` |
 
 `6b405e9` is the current Git `HEAD` used for this account before this documentation commit. The Python engine, web source, site-data generator and Kiro directory are committed. The generated `web/node_modules` directory is ignored.
+
+## Deployment and credentials
+
+The web build has two Vercel entry paths. When `web` is the Vercel Root Directory, `web/vercel.json` runs the Node-only `build:vercel` script and publishes `dist`. When the repository root is used, the root `vercel.json` installs from `web/package-lock.json`, runs the same script and publishes `web/dist`. This avoids requiring Python or provider credentials in the Vercel build environment. The generated TypeScript cassette data is committed and refreshed by the local `npm run build` path.
+
+Live drift is intentionally separate from the static site. The CLI reads `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` from the process environment or the ignored root `.env` file. No key is committed and no key belongs in Vercel project settings. The live command was not run here because provider credentials were not supplied.
 
 ## Hook record
 
@@ -74,7 +80,7 @@ The following commands were also run on 19 August 2026:
 
 | Command | Observed result |
 |---|---|
-| `python -m pytest -q` | `112 passed` |
+| `python -m pytest -q` | `113 passed` |
 | `python -m ruff check .` | `All checks passed!` |
 | `python -m mypy` | `Success: no issues found in 14 source files` |
 | `python -m ferric.cli list --cassette-dir tests/cassettes` | Four validated cassettes: OpenAI, Anthropic and MCP evidence |

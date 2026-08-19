@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -7,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from ferric.drift import DriftProviderError, classify_drift, run_drift
+from ferric.drift import DriftProviderError, classify_drift, load_dotenv, run_drift
 from ferric.report import render_drift_report, write_drift_report
 from ferric.schema import (
     AssistantMessage,
@@ -18,6 +19,33 @@ from ferric.schema import (
     ToolCall,
 )
 from ferric.store import CassetteStore
+
+
+def test_load_dotenv_reads_local_credentials(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Load a quoted local key without requiring python-dotenv."""
+
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    path = tmp_path / ".env"
+    path.write_text(
+        "# local credentials\nOPENAI_API_KEY='local-test-key'\n",
+        encoding="utf-8",
+    )
+    assert load_dotenv(path) == path
+    assert os.environ["OPENAI_API_KEY"] == "local-test-key"
+
+
+def test_load_dotenv_preserves_existing_environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Keep a shell credential ahead of a value in the local file."""
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "shell-key")
+    path = tmp_path / ".env"
+    path.write_text("ANTHROPIC_API_KEY=file-key\n", encoding="utf-8")
+    load_dotenv(path)
+    assert os.environ["ANTHROPIC_API_KEY"] == "shell-key"
 
 
 def test_drift_classifies_unchanged(sample_cassette: Cassette) -> None:

@@ -1,7 +1,8 @@
 {
   "framework": "vite",
-  "buildCommand": "npm run build:vercel",
-  "outputDirectory": "dist",
+  "installCommand": "npm --prefix web ci",
+  "buildCommand": "npm --prefix web run build:vercel",
+  "outputDirectory": "web/dist",
   "rewrites": [
     { "source": "/docs", "destination": "/docs/index.html" },
     { "source": "/docs/", "destination": "/docs/index.html" },

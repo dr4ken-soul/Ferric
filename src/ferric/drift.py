@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+from pathlib import Path
 from typing import Any, Literal
 
 from ferric.adapters.anthropic import create_anthropic_client, normalise_anthropic
@@ -22,6 +24,24 @@ from ferric.store import CassetteStore
 
 class DriftProviderError(RuntimeError):
     """Report a provider failure during an explicitly requested drift run."""
+
+
+def load_dotenv(path: Path | None = None) -> Path | None:
+    """Load simple local environment entries without replacing shell values."""
+
+    candidate = path or Path.cwd() / ".env"
+    if not candidate.is_file():
+        return None
+    for raw_line in candidate.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key.isidentifier():
+            os.environ.setdefault(key, value)
+    return candidate
 
 
 def _tool_names(events: list[Event]) -> list[str]:

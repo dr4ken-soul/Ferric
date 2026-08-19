@@ -10,7 +10,7 @@ from typing import Annotated, Any, Literal, NoReturn, cast
 
 import typer
 
-from ferric.drift import DriftProviderError, run_drift
+from ferric.drift import DriftProviderError, load_dotenv, run_drift
 from ferric.redact import RedactionRule
 from ferric.report import write_drift_report
 from ferric.schema import EventRole
@@ -268,6 +268,7 @@ def drift(
 ) -> None:
     """Call a live provider and report model drift for the cassette library."""
 
+    load_dotenv()
     if provider not in {None, "openai", "anthropic"}:
         _abort(ValueError("provider must be openai or anthropic"))
     selected_provider = cast(Literal["openai", "anthropic"] | None, provider)
