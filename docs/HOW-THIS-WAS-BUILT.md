@@ -51,7 +51,7 @@ The committed sample report was generated from three local drift fixtures by [`s
 
 The web build has two Vercel entry paths. When `web` is the Vercel Root Directory, `web/vercel.json` runs the Node-only `build:vercel` script and publishes `dist`. When the repository root is used, the root `vercel.json` installs from `web/package-lock.json`, runs the same script and publishes `web/dist`. This avoids requiring Python or provider credentials in the Vercel build environment. The generated TypeScript cassette data is committed and refreshed by the local `npm run build` path.
 
-Live drift is intentionally separate from the static site. The CLI reads `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` from the process environment or the ignored root `.env` file. No key is committed and no key belongs in Vercel project settings. The live command was not run here because provider credentials were not supplied.
+Live drift is intentionally separate from the static site. The CLI reads `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` or `GROQ_API_KEY` from the process environment or the ignored root `.env` file. Groq uses the OpenAI-compatible client with its own base URL and key. No key is committed and no key belongs in Vercel project settings. The live command was not run here because provider credentials were not supplied.
 
 ## Hook record
 
@@ -80,7 +80,7 @@ The following commands were also run on 19 August 2026:
 
 | Command | Observed result |
 |---|---|
-| `python -m pytest -q` | `113 passed` |
+| `python -m pytest -q` | `114 passed` |
 | `python -m ruff check .` | `All checks passed!` |
 | `python -m mypy` | `Success: no issues found in 14 source files` |
 | `python -m ferric.cli list --cassette-dir tests/cassettes` | Four validated cassettes: OpenAI, Anthropic and MCP evidence |

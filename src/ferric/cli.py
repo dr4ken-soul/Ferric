@@ -259,7 +259,7 @@ def drift(
     ] = None,
     provider: Annotated[
         str | None,
-        typer.Option("--provider", help="Target provider: openai or anthropic."),
+        typer.Option("--provider", help="Target provider: openai, anthropic or groq."),
     ] = None,
     custom_rule: Annotated[
         list[str] | None,
@@ -269,9 +269,9 @@ def drift(
     """Call a live provider and report model drift for the cassette library."""
 
     load_dotenv()
-    if provider not in {None, "openai", "anthropic"}:
-        _abort(ValueError("provider must be openai or anthropic"))
-    selected_provider = cast(Literal["openai", "anthropic"] | None, provider)
+    if provider not in {None, "openai", "anthropic", "groq"}:
+        _abort(ValueError("provider must be openai, anthropic or groq"))
+    selected_provider = cast(Literal["openai", "anthropic", "groq"] | None, provider)
     store = _store(cassette_dir, custom_rule)
     try:
         cassettes = store.verify()

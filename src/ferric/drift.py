@@ -8,7 +8,11 @@ from pathlib import Path
 from typing import Any, Literal
 
 from ferric.adapters.anthropic import create_anthropic_client, normalise_anthropic
-from ferric.adapters.openai import create_openai_client, normalise_openai
+from ferric.adapters.openai import (
+    create_groq_client,
+    create_openai_client,
+    normalise_openai,
+)
 from ferric.schema import (
     Cassette,
     DriftClassification,
@@ -169,17 +173,21 @@ def _token_count(response: Any) -> int:
     return 0
 
 
-def infer_target_provider(target_model: str) -> Literal["openai", "anthropic"]:
+def infer_target_provider(target_model: str) -> Literal["openai", "anthropic", "groq"]:
     """Infer a supported target provider from a model identifier."""
 
     lowered = target_model.casefold()
-    return "anthropic" if "claude" in lowered else "openai"
+    if "claude" in lowered:
+        return "anthropic"
+    if any(name in lowered for name in ("llama", "mixtral", "gemma")):
+        return "groq"
+    return "openai"
 
 
 def _target_request(
     cassette: Cassette,
     target_model: str,
-    target_provider: Literal["openai", "anthropic"],
+    target_provider: Literal["openai", "anthropic", "groq"],
 ) -> dict[str, Any]:
     request: dict[str, Any] = dict(cassette.request)
     request.pop("_positional_args", None)
@@ -187,7 +195,7 @@ def _target_request(
     if cassette.provider == target_provider:
         return request
     messages = request.get("messages", [])
-    if target_provider == "openai":
+    if target_provider in {"openai", "groq"}:
         system = request.pop("system", None)
         converted: list[dict[str, Any]] = []
         if system is not None:
@@ -253,17 +261,23 @@ def _target_request(
 def _live_call(
     cassette: Cassette,
     target_model: str,
-    target_provider: Literal["openai", "anthropic"],
+    target_provider: Literal["openai", "anthropic", "groq"],
     client: Any | None = None,
 ) -> tuple[list[Event], int]:
     request = _target_request(cassette, target_model, target_provider)
-    if target_provider == "openai":
+    if target_provider in {"openai", "groq"}:
         try:
-            target_client = client if client is not None else create_openai_client()
+            if client is not None:
+                target_client = client
+            elif target_provider == "groq":
+                target_client = create_groq_client()
+            else:
+                target_client = create_openai_client()
         except ImportError as error:
-            raise DriftProviderError(
-                "OpenAI drift requires the 'openai' extra"
-            ) from error
+            extra = "groq" if target_provider == "groq" else "openai"
+            raise DriftProviderError(f"{extra} drift requires its provider extra") from error
+        except ValueError as error:
+            raise DriftProviderError(str(error)) from error
         try:
             response = target_client.chat.completions.create(**request)
         except BaseException as error:
@@ -292,7 +306,7 @@ def run_drift(
     store: CassetteStore,
     target_model: str,
     *,
-    target_provider: Literal["openai", "anthropic"] | None = None,
+    target_provider: Literal["openai", "anthropic", "groq"] | None = None,
     client: Any | None = None,
 ) -> DriftRun:
     """Call one target provider and skip unsupported MCP baselines honestly."""

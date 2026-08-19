@@ -367,7 +367,7 @@ class DriftRun(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    target_provider: Literal["openai", "anthropic"]
+    target_provider: Literal["openai", "anthropic", "groq"]
     target_model: str = Field(min_length=1)
     results: list[DriftResult] = Field(default_factory=list)
     skipped: list[DriftSkipped] = Field(default_factory=list)

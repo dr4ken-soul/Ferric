@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import Any
 
 from ferric.schema import (
@@ -141,3 +142,14 @@ def create_openai_client() -> Any:
     from openai import OpenAI
 
     return OpenAI()
+
+
+def create_groq_client() -> Any:
+    """Construct an OpenAI-compatible client pointed at Groq's API."""
+
+    from openai import OpenAI
+
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        raise ValueError("GROQ_API_KEY is required for Groq drift")
+    return OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")

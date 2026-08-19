@@ -220,6 +220,22 @@ def test_run_drift_uses_explicit_provider_and_skips_mcp(cassette_dir: Path) -> N
     assert all(call["model"] == "gpt-local-target" for call in endpoint.calls)
 
 
+def test_run_drift_supports_groq_openai_compatible_endpoint(cassette_dir: Path) -> None:
+    """Use the Groq target label with the same chat completion shape."""
+
+    endpoint = _FakeDriftEndpoint()
+    client = SimpleNamespace(chat=SimpleNamespace(completions=endpoint))
+    run = run_drift(
+        CassetteStore(cassette_dir),
+        "llama-3.3-70b-versatile",
+        target_provider="groq",
+        client=client,
+    )
+    assert run.target_provider == "groq"
+    assert len(run.results) == 3
+    assert run.tokens_spent == 30
+
+
 def test_run_drift_converts_missing_sdk_to_domain_error(
     cassette_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -25,6 +25,7 @@ dev = [
 ]
 openai = ["openai>=1.40"]
 anthropic = ["anthropic>=0.34"]
+groq = ["openai>=1.40"]
 
 [project.scripts]
 ferric = "ferric.cli:app"
