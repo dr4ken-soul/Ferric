@@ -12,5 +12,5 @@
     "noEmit": true,
     "strict": true
   },
-  "include": ["vite.config.ts", "tailwind.config.ts", "eslint.config.js"]
+  "include": ["vite.config.ts", "tailwind.config.ts", "eslint.config.js", "server/**/*.ts", "api/**/*.ts"]
 }

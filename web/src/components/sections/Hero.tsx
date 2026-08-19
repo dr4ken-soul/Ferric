@@ -28,12 +28,12 @@ export function Hero() {
           <motion.div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4" initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 16 }} animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }} transition={reducedMotion ? { duration: 0.2 } : { duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.92 }}>
             <motion.a
               className="group relative inline-flex items-center gap-2.5 bg-[var(--accent)] py-1.5 pl-5 pr-1.5 font-mono text-[12px] font-medium uppercase tracking-[0.14em] text-[var(--bg-primary)] transition-colors duration-[240ms] hover:bg-[var(--accent-hover)]"
-              href="#recorder"
+              href="#live-demo"
               onPointerLeave={magnetic.onPointerLeave}
               onPointerMove={magnetic.onPointerMove}
               style={{ x: magnetic.x, y: magnetic.y }}
             >
-              See it catch a regression
+              Try the live recorder
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--bg-primary)]/10 transition-transform duration-200 group-hover:-translate-y-px group-hover:translate-x-0.5"><Icon className="h-[13px] w-[13px]" name="arrow-up-right" /></span>
             </motion.a>
             <a className="inline-flex items-center gap-2 border-b border-[var(--border-default)] pb-1 font-mono text-[12px] uppercase tracking-[0.14em] text-[var(--text-secondary)] transition-colors duration-[240ms] hover:border-[var(--accent)] hover:text-[var(--text-primary)]" href="/docs">Read the docs</a>

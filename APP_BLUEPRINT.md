@@ -4,9 +4,9 @@
 
 Ferric is a flight recorder for LLM and agent traffic. Wrap a model client in one line, it captures every prompt, tool call and response into a cassette on disk, then replays those cassettes in CI with no network access and no API spend. Assertions run on the shape of the interaction rather than the wording, so a test fails on a real behavioural regression and stays quiet when the model simply reworded itself.
 
-Built for the Ready, Spec, Ship Hackathon sponsored by Kiro. Submissions close 23 August 2026 at 23:59 UTC.
+Built for the Ready, Spec, Ship Hackathon sponsored by Kiro. Submissions close 23 August 2026 at 23:59 UTC. The core product remains a local developer tool. The deployed site adds a small Groq-backed demonstration route so a judge can record one interaction in the browser and replay it without another provider call.
 
-Note on scope: this is a developer tool, not a SaaS product. There is no signup, no database, no payments and no hosted service. The blueprint sections below that would normally cover pricing tiers, auth providers and infrastructure cost curves are answered honestly rather than invented, because a monetisation model fabricated for a hackathon submission is exactly the kind of thing the viability screen is looking for.
+Note on scope: this is a developer tool, not a SaaS product. There is no signup, database, payments or hosted cassette library. The deployed demonstration route is stateless and keeps its returned cassette in the browser session. The blueprint sections below that would normally cover pricing tiers, auth providers and infrastructure cost curves are answered honestly rather than invented, because a monetisation model fabricated for a hackathon submission is exactly the kind of thing the viability screen is looking for.
 
 ---
 

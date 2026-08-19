@@ -42,7 +42,7 @@ Out of scope for the competition period, stated openly on the marketing page and
 | Docs site | Same Vite app, separate route, MDX or plain TSX pages |
 | Deployment | Vercel or Netlify, static build, no serverless function needed |
 
-No backend. No database. No auth. No payments. Ferric runs entirely on the developer's machine and in their CI, and the website is static.
+No database. No auth. No payments. The Python engine remains local-first and runs in developer machines and CI. The deployed web surface also includes a deliberately small server-side Groq demonstration route. It keeps the provider key server-side and returns a browser-session cassette for local replay. It is not a hosted cassette store or account service.
 
 ## Project Structure
 

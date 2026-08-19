@@ -53,6 +53,8 @@ The web build has two Vercel entry paths. When `web` is the Vercel Root Director
 
 Live drift is intentionally separate from the static site. The CLI reads `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` or `GROQ_API_KEY` from the process environment or the ignored root `.env` file. Groq uses the OpenAI-compatible client with its own base URL and key. No key is committed and no key belongs in Vercel project settings. The live command was not run here because provider credentials were not supplied.
 
+The hosted browser demonstration is documented in [`VIDEO-AND-RUNBOOK.md`](../VIDEO-AND-RUNBOOK.md). It adds a server-side Groq route for the deployed demo and keeps the returned cassette in the browser session for local replay. This is a presentation path, not a replacement for the local Python cassette store.
+
 ## Hook record
 
 The hook definitions are Kiro configuration. Their command actions can also be run directly.

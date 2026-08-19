@@ -214,7 +214,7 @@ npm run build
 
 ## Vercel deployment
 
-The site is static. It does not need a database, serverless function, API key or Vercel environment variable.
+The site is a static frontend with one serverless demonstration route. It does not need a database, account system or persistent cassette store. The live browser recorder needs `GROQ_API_KEY` in Vercel Project Settings.
 
 The simplest Vercel setup uses these project settings:
 
@@ -226,11 +226,11 @@ Build Command: npm run build:vercel
 Output Directory: dist
 ```
 
-The repository also includes a root [`vercel.json`](vercel.json) for importing the repository without changing Root Directory. That path installs from `web/package-lock.json`, builds the same Node-only static bundle and publishes `web/dist`. The generated cassette data is committed and is therefore available to Vercel without installing the Python package.
+The repository also includes a root [`vercel.json`](vercel.json) for importing the repository without changing Root Directory. That path installs from `web/package-lock.json`, builds the frontend and serverless route, and publishes `web/dist`. The generated cassette data is committed and is therefore available to Vercel without installing the Python package.
 
 ## Live drift credentials
 
-Live drift is a local developer workflow. It is not used by the website or by the Vercel build. The CLI reads these variables from the shell or from the ignored root `.env` file:
+Live drift is a local developer workflow. The hosted browser recorder uses only `GROQ_API_KEY` from Vercel Project Settings. The CLI reads these variables from the shell or from the ignored root `.env` file:
 
 ```dotenv
 OPENAI_API_KEY=your-openai-key
@@ -240,9 +240,11 @@ GROQ_API_KEY=your-groq-key
 
 Use an OpenAI key from <https://platform.openai.com/api-keys>, an Anthropic key from <https://console.anthropic.com/settings/keys>, or a Groq key from <https://console.groq.com/keys>. Groq uses its OpenAI-compatible API with `GROQ_API_KEY`, not `OPENAI_API_KEY`. You only need the provider matching `ferric drift --to`.
 
-Never commit `.env` or put these keys into Vercel. The static site has no code path that needs them.
+Never commit `.env`. Put only `GROQ_API_KEY` into Vercel for the hosted browser recorder. Do not put local CLI keys into a frontend environment variable, because browser-exposed variables are not secret.
 
-Ferric itself runs without any provider key in passthrough, replay and offline test modes. A key is only needed when you explicitly run live `ferric drift` against a provider. The current Vercel deployment is a static landing and docs site. It does not record model traffic from a deployed application.
+Ferric itself runs without any provider key in passthrough, replay and offline test modes. A key is only needed when you explicitly run live `ferric drift` or use the hosted browser recorder. The Vercel deployment serves the landing and docs site plus a server-side Groq demo route. It does not persist visitor cassettes after the browser session ends.
+
+The hosted browser recording flow is documented in [`VIDEO-AND-RUNBOOK.md`](VIDEO-AND-RUNBOOK.md). It uses the server-side `/api/ferric` route, accepts `GROQ_API_KEY` in Vercel Project Settings, and replays the returned cassette in the browser session.
 
 ## Licence and repository
 
