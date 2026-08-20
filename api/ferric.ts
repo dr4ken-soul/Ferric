@@ -1,4 +1,4 @@
-import { handleDemoRequest } from '../web/server/demo'
+import { handleDemoRequest } from '../web/server/demo.js'
 
 interface VercelRequest {
   method?: string
