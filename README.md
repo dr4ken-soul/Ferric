@@ -244,7 +244,7 @@ Never commit `.env`. Put only `GROQ_API_KEY` into Vercel for the hosted browser 
 
 Ferric itself runs without any provider key in passthrough, replay and offline test modes. A key is only needed when you explicitly run live `ferric drift` or use the hosted browser recorder. The Vercel deployment serves the landing and docs site plus a server-side Groq demo route. It does not persist visitor cassettes after the browser session ends.
 
-The hosted browser recording flow is documented in [`VIDEO-AND-RUNBOOK.md`](VIDEO-AND-RUNBOOK.md). It uses the server-side `/api/ferric` route, accepts `GROQ_API_KEY` in Vercel Project Settings, and replays the returned cassette in the browser session.
+The hosted browser interaction flow and the separate screen-video instructions are documented in [`VIDEO-AND-RUNBOOK.md`](VIDEO-AND-RUNBOOK.md). Ferric captures model traffic into a cassette. It does not create the submission video. The server-side `/api/ferric` route accepts `GROQ_API_KEY` in Vercel Project Settings and replays the returned cassette in the browser session.
 
 ## Licence and repository
 

@@ -71,19 +71,26 @@ function validateRequest(input: unknown): DemoRequest {
   }
 }
 
+/** Remove provider reasoning blocks from the concise browser demonstration. */
+function visibleAssistantText(value: string): string {
+  return value.replace(/<think>[\s\S]*?<\/think>/gi, '').trim()
+}
+
 /** Call Groq, normalise the interaction and return a browser replay cassette. */
 export async function recordWithGroq(input: unknown, environment: GroqEnvironment): Promise<DemoCassette> {
   const request = validateRequest(input)
   const apiKey = environment.GROQ_API_KEY?.trim()
   if (!apiKey) throw new Error('The hosted demo is not configured. Add GROQ_API_KEY in Vercel Project Settings.')
 
-  const model = request.model || environment.FERRIC_DEMO_MODEL || 'llama-3.3-70b-versatile'
+  const model = request.model || environment.FERRIC_DEMO_MODEL || 'qwen/qwen3.6-27b'
   const upstream = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
       model,
       temperature: 0,
+      reasoning_effort: 'none',
+      max_completion_tokens: 180,
       messages: [
         { role: 'system', content: 'You are a concise demo assistant. Answer in two short sentences.' },
         { role: 'user', content: request.prompt },
@@ -105,8 +112,9 @@ export async function recordWithGroq(input: unknown, environment: GroqEnvironmen
   const userContent = redactText(request.prompt, 0, 'messages[1].content', redactions)
   const message = ((safeResponse.choices as Array<{ message?: Record<string, unknown> }> | undefined)?.[0]?.message) || {}
   const assistantContent = typeof message.content === 'string'
-    ? redactText(message.content, 1, 'response.choices[0].message.content', redactions)
+    ? redactText(visibleAssistantText(message.content), 1, 'response.choices[0].message.content', redactions)
     : message.content ?? null
+  if (typeof message.content === 'string') message.content = assistantContent
   const events: DemoEvent[] = [
     { index: 0, role: 'user', payload: { content: userContent, sourceRole: 'user' } },
     { index: 1, role: 'assistant', payload: { content: assistantContent, refusal: Boolean(message.refusal) } },

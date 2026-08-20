@@ -13,7 +13,7 @@ export function Install() {
       <div className="mx-auto grid max-w-[1400px] grid-cols-1 items-end gap-10 lg:grid-cols-12 lg:gap-8">
         <Reveal className="lg:col-span-7">
           <h2 className="max-w-[16ch] text-balance font-display text-[clamp(2.25rem,5vw,4.5rem)] font-extrabold uppercase leading-[0.9] text-[var(--text-primary)]">Runs offline. No key required.</h2>
-          <p className="mt-6 max-w-[52ch] font-body text-[15px] leading-[1.6] text-[var(--text-secondary)]">Run the offline suite with no provider account, or use the live recorder above with a Groq key configured on your own deployment.</p>
+          <p className="mt-6 max-w-[52ch] font-body text-[15px] leading-[1.6] text-[var(--text-secondary)]">Run the offline suite with no provider account, or use the hosted interaction demo above with a Groq key configured on your own deployment.</p>
         </Reveal>
         <Reveal className="lg:col-span-5" transition={{ delay: 0.15 }}>
           <div className="group flex items-center justify-between gap-4 border border-[var(--border-strong)] bg-[var(--bg-secondary)] py-4 pl-5 pr-2">

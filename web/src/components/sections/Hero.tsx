@@ -33,7 +33,7 @@ export function Hero() {
               onPointerMove={magnetic.onPointerMove}
               style={{ x: magnetic.x, y: magnetic.y }}
             >
-              Try the live recorder
+              Open the live demo
               <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--bg-primary)]/10 transition-transform duration-200 group-hover:-translate-y-px group-hover:translate-x-0.5"><Icon className="h-[13px] w-[13px]" name="arrow-up-right" /></span>
             </motion.a>
             <a className="inline-flex items-center gap-2 border-b border-[var(--border-default)] pb-1 font-mono text-[12px] uppercase tracking-[0.14em] text-[var(--text-secondary)] transition-colors duration-[240ms] hover:border-[var(--accent)] hover:text-[var(--text-primary)]" href="/docs">Read the docs</a>
@@ -50,7 +50,7 @@ export function Hero() {
               <>
                 <EvidenceSourceBadge className="border-b border-[var(--border-subtle)] px-4 py-2.5" source={data.evidenceSource} />
                 <div className="grid grid-cols-2 divide-x divide-[var(--border-subtle)] border-b border-[var(--border-subtle)] sm:grid-cols-3">
-                  {[['Provider', data.provider], ['Model', data.model], ['Events', data.eventCount]].map(([label, value], index) => (
+                  {[['Source', 'local fixture'], ['Model', data.model], ['Events', data.eventCount]].map(([label, value], index) => (
                     <div className={`px-4 py-3 ${index === 2 ? 'hidden sm:block' : ''}`} key={label}>
                       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">{label}</p>
                       <p className="mt-1.5 truncate font-mono text-[13px] text-[var(--text-primary)] tabular-nums">{value}</p>
