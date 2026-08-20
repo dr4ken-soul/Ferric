@@ -50,7 +50,7 @@ export function Hero() {
               <>
                 <EvidenceSourceBadge className="border-b border-[var(--border-subtle)] px-4 py-2.5" source={data.evidenceSource} />
                 <div className="grid grid-cols-2 divide-x divide-[var(--border-subtle)] border-b border-[var(--border-subtle)] sm:grid-cols-3">
-                  {[['Source', 'local fixture'], ['Model', data.model], ['Events', data.eventCount]].map(([label, value], index) => (
+                  {[['Source', 'local fixture'], ['Hosted model', 'qwen/qwen3.6-27b'], ['Events', data.eventCount]].map(([label, value], index) => (
                     <div className={`px-4 py-3 ${index === 2 ? 'hidden sm:block' : ''}`} key={label}>
                       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">{label}</p>
                       <p className="mt-1.5 truncate font-mono text-[13px] text-[var(--text-primary)] tabular-nums">{value}</p>
