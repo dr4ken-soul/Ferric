@@ -226,6 +226,8 @@ Build Command: npm run build:vercel
 Output Directory: dist
 ```
 
+When Root Directory is `web`, Vercel is already running from `web`. Do not use `cd web` in the dashboard commands. The install command must be exactly `npm ci`, and the build command must be exactly `npm run build:vercel`.
+
 The repository also includes a root [`vercel.json`](vercel.json) for importing the repository without changing Root Directory. That path installs from `web/package-lock.json`, builds the frontend and serverless route, and publishes `web/dist`. The generated cassette data is committed and is therefore available to Vercel without installing the Python package.
 
 ## Live drift credentials

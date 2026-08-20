@@ -53,6 +53,8 @@ Build Command: npm run build:vercel
 Output Directory: dist
 ```
 
+When `web` is the Root Directory, do not prefix commands with `cd web`. Vercel is already inside that directory. If the Vercel dashboard currently shows `cd web && npm ci`, replace it with `npm ci`. Replace `cd web && npm run build:vercel` with `npm run build:vercel` as well.
+
 In Vercel Project Settings, open Environment Variables and add:
 
 ```text
